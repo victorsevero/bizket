@@ -37,6 +37,31 @@ local make_msg = function(player_hp, player_x, player_y, boss_hp, boss_x, boss_y
     return msg
 end
 
+local set_commands = function(commands)
+    local buttons = {}
+    buttons.Left = false
+    buttons.Right = false
+    buttons.Cross = false
+    buttons.Circle = false
+    buttons.Square = false
+
+    for i = 1, commands:len() do
+        local c = commands:sub(i, i)
+        if c == "l" then
+            buttons.Left = true
+        elseif c == "r" then
+            buttons.Right = true
+        elseif c == "x" then
+            buttons.Cross = true
+        elseif c == "o" then
+            buttons.Circle = true
+        elseif c == "s" then
+            buttons.Square = true
+        end
+    end
+    joypad.set(buttons, 1)
+end
+
 while true do
     assert(memory.usememorydomain("MainRAM"))
     local player_hp = get_player_hp()
@@ -48,5 +73,8 @@ while true do
     local msg = make_msg(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
     comm.socketServerSend(msg)
     local response = comm.socketServerResponse()
+    if response ~= "ok" then
+        set_commands(response)
+    end
     emu.frameadvance()
 end

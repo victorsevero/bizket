@@ -1,6 +1,14 @@
 import socket
 
 
+def encode_msg(s: str) -> bytes:
+    msg = s.encode()
+    msg = b" ".join((str(len(msg)).encode(), msg))
+    print(msg)
+
+    return msg
+
+
 def start_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = ("localhost", 6969)
@@ -12,8 +20,7 @@ def start_server():
     connection, client_address = sock.accept()
     print("Connection from {}:{}".format(*client_address))
 
-    response = "OK".encode()
-    response = b" ".join((str(len(response)).encode(), response))
+    response = "s"
 
     try:
         while True:
@@ -31,7 +38,11 @@ def start_server():
                 print(f"HP: {player_hp}, X: {player_x}, Y: {player_y}\n")
                 print("Boss")
                 print(f"HP: {boss_hp}, X: {boss_x}, Y: {boss_y}\n\n")
-                connection.sendall(response)
+                connection.sendall(encode_msg(response))
+                if response != "ok":
+                    response = "ok"
+                else:
+                    response = "s"
     except:
         print("Closing server")
         connection.close()
