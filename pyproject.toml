@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "bizket"
+version = "0.1.0"
+description = "Python-Lua Socket implementation for BizHawk emulator"
+authors = ["Victor Severo <victor.severo.miranda@gmail.com>"]
+license = "BSD 3-Clause"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+tensorflow = "^2.10.0"
+pygad = "^2.18.1"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^5.0.4"
+black = "^22.10.0"
+ipykernel = "^6.16.1"
+notebook = "^6.5.1"
+ipywidgets = "^8.0.2"
+jupyter = "^1.0.0"
+tqdm = "^4.64.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
