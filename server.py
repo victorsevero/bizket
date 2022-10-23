@@ -1,52 +1,74 @@
 import socket
+from typing import Dict
 
 
-def encode_msg(s: str) -> bytes:
-    msg = s.encode()
-    msg = b" ".join((str(len(msg)).encode(), msg))
-    print(msg)
+class Server:
+    def __init__(self, ip="localhost", port=6969):
+        self.ip = ip
+        self.port = port
 
-    return msg
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._bind_server()
+        self._accept_conn()
 
+        self._i = 0
 
-def start_server():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = ("localhost", 6969)
-    print("Starting server on {}:{}".format(*server_address))
-    sock.bind(server_address)
-    sock.listen(1)
+    def _bind_server(self):
+        print(f"Starting server on {self.ip}:{self.port}")
+        self.sock.bind((self.ip, self.port))
+        self.sock.listen(1)
 
-    print("Waiting for a connection")
-    connection, client_address = sock.accept()
-    print("Connection from {}:{}".format(*client_address))
+    def _accept_conn(self):
+        print("Waiting for a connection")
+        self._conn, client_address = self.sock.accept()
+        print("Connection from {}:{}".format(*client_address))
 
-    response = "s"
+    def get_game_data(self):
+        data = self._conn.recv(1024)
+        if data:
+            return self._decode_msg(data)
 
-    try:
-        while True:
-            data = connection.recv(1024)
-            if data:
-                data_list = data.decode().split(" ")[1:]
-                data_dict = {x[:2]: x[2:] for x in data_list}
-                player_hp = data_dict["ph"]
-                player_x = data_dict["px"]
-                player_y = data_dict["py"]
-                boss_hp = data_dict["bh"]
-                boss_x = data_dict["bx"]
-                boss_y = data_dict["by"]
-                print("Player")
-                print(f"HP: {player_hp}, X: {player_x}, Y: {player_y}\n")
-                print("Boss")
-                print(f"HP: {boss_hp}, X: {boss_x}, Y: {boss_y}\n\n")
-                connection.sendall(encode_msg(response))
-                if response != "ok":
-                    response = "ok"
-                else:
-                    response = "s"
-    except:
-        print("Closing server")
-        connection.close()
+    @staticmethod
+    def _decode_msg(data: bytes) -> Dict[str, int]:
+        data_list = data.decode().split(" ")[1:]
+        data_dict = {x[:2]: int(x[2:]) for x in data_list}
+        data_dict["player_hp"] = data_dict.pop("ph")
+        data_dict["player_x"] = data_dict.pop("px")
+        data_dict["player_y"] = data_dict.pop("py")
+        data_dict["boss_hp"] = data_dict.pop("bh")
+        data_dict["boss_x"] = data_dict.pop("bx")
+        data_dict["boss_y"] = data_dict.pop("by")
+        print(data_dict)
+
+        return data_dict
+
+    def send_msg(self, msg: str):
+        self._conn.sendall(self._encode_msg(msg))
+        self._i += 1
+
+    @staticmethod
+    def _encode_msg(string: str) -> bytes:
+        msg = string.encode()
+        msg = b" ".join((str(len(msg)).encode(), msg))
+
+        return msg
+
+    def square_spam_strat(self):
+        if self._i % 21 == 0:
+            msg = "s"
+        else:
+            msg = "ok"
+        self.send_msg(msg)
+
+    def close(self):
+        self.conn.close()
 
 
 if __name__ == "__main__":
-    start_server()
+    server = Server()
+    try:
+        while True:
+            game_data = server.get_game_data()
+            server.square_spam_strat()
+    except:
+        server.close()
