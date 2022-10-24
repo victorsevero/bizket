@@ -9,11 +9,11 @@ from server import Server
 
 
 gann = pygad.gann.GANN(
-    num_solutions=2,
+    num_solutions=10,
     num_neurons_input=4,
     num_neurons_hidden_layers=[5],
     num_neurons_output=5,
-    hidden_activations=["relu"],
+    hidden_activations="relu",
     output_activation="softmax",
 )
 
@@ -40,18 +40,43 @@ def buttons_map(buttons):
     return joypad_msg
 
 
+def x_scaler(x):
+    x_min = 4445
+    x_max = 4847
+    x_std = (x - x_min) / (x_max - x_min)
+    return 2 * x_std - 1
+
+
+def y_scaler(y):
+    y_min = 141
+    y_max = 442
+    y_std = (y - y_min) / (y_max - y_min)
+    return 2 * y_std - 1
+
+
+def msg_to_nn_inputs(data):
+    data_inputs = data.copy()
+    data_inputs.pop("player_hp")
+    data_inputs.pop("boss_hp")
+
+    data_inputs["player_x"] = x_scaler(data_inputs["player_x"])
+    data_inputs["player_y"] = y_scaler(data_inputs["player_y"])
+    data_inputs["boss_x"] = x_scaler(data_inputs["boss_x"])
+    data_inputs["boss_y"] = y_scaler(data_inputs["boss_y"])
+
+    data_inputs = np.array([[*data_inputs.values()]])
+    return data_inputs
+
+
 def fitness_func(solution, sol_idx):
-    global gann, server
+    global gann, server, fits
 
     server.load_state()
     done = False
     i = 0
     while (not done) and i < 60 * 60:
         data = server.get_msg()
-        data_inputs = data.copy()
-        data_inputs.pop("player_hp")
-        data_inputs.pop("boss_hp")
-        data_inputs = np.array([[*data_inputs.values()]])
+        data_inputs = msg_to_nn_inputs(data)
         buttons = pygad.nn.predict(
             last_layer=gann.population_networks[sol_idx],
             data_inputs=data_inputs,
@@ -60,6 +85,8 @@ def fitness_func(solution, sol_idx):
         server.send_msg(joypad_msg)
         done = (data["player_hp"] == 0) or (data["boss_hp"] == 0)
         i += 1
+
+    print(f"{sol_idx} ", end="")
 
     fitness = data["player_hp"] - data["boss_hp"]
     return fitness
@@ -76,9 +103,12 @@ def callback_generation(ga):
     gann.update_population_trained_weights(
         population_trained_weights=population_matrices
     )
-
+    print("")
     print(f"Generation = {ga.generations_completed}")
-    print(f"Fitness    = {ga.best_solution()[1]}")
+    print(
+        f"Fitness    = {ga.best_solutions_fitness[ga.generations_completed-1]}"
+    )
+    pass
 
 
 def bot():
@@ -89,21 +119,21 @@ def bot():
     ga = pygad.GA(
         num_generations=10,
         num_parents_mating=2,
-        initial_population=population_vectors.copy(),
         fitness_func=fitness_func,
-        mutation_percent_genes=10,
+        initial_population=population_vectors.copy(),
+        keep_elitism=1,
         on_generation=callback_generation,
+        save_best_solutions=True,
+        # parallel_processing=["process", 8],
     )
-
     ga.run()
+    ga.plot_fitness(save_dir="fitness.png")
+    ga.save("model")
 
-    ga.plot_fitness()
-    plt.savefig("test.png")
-
-    solution, solution_fitness, solution_idx = ga.best_solution()
-    print(f"Parameters of the best solution : {solution}")
-    print(f"Fitness value of the best solution = {solution_fitness}")
-    print(f"Index of the best solution: {solution_idx}")
+    # solution, solution_fitness, solution_idx = ga.best_solution()
+    # print(f"Parameters of the best solution : {solution}")
+    # print(f"Fitness value of the best solution = {solution_fitness}")
+    # print(f"Index of the best solution: {solution_idx}")
 
 
 if __name__ == "__main__":

@@ -167,3 +167,7 @@ garbage/
 
 # lua script por quick test purposes
 /test.lua
+
+# model outputs
+/fitness.png
+/model.pkl
