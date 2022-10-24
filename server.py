@@ -23,13 +23,19 @@ class Server:
         self._conn, client_address = self.sock.accept()
         print("Connection from {}:{}".format(*client_address))
 
-    def get_game_data(self):
+    def get_game_data(self, **kwargs):
+        msg = self.get_msg(**kwargs)
+        self.send_msg("ok")
+
+        return msg
+
+    def get_msg(self, **kwargs):
         data = self._conn.recv(1024)
         if data:
-            return self._decode_msg(data)
+            return self._decode_msg(data, **kwargs)
 
     @staticmethod
-    def _decode_msg(data: bytes) -> Dict[str, int]:
+    def _decode_msg(data: bytes, print_data=False) -> Dict[str, int]:
         data_list = data.decode().split(" ")[1:]
         data_dict = {x[:2]: int(x[2:]) for x in data_list}
         data_dict["player_hp"] = data_dict.pop("ph")
@@ -38,7 +44,8 @@ class Server:
         data_dict["boss_hp"] = data_dict.pop("bh")
         data_dict["boss_x"] = data_dict.pop("bx")
         data_dict["boss_y"] = data_dict.pop("by")
-        print(data_dict)
+        if print_data:
+            print(data_dict)
 
         return data_dict
 
@@ -63,12 +70,18 @@ class Server:
     def close(self):
         self.conn.close()
 
+    def load_state(self):
+        self.get_msg()
+        self.send_msg("load")
+        self._i = 0
+
 
 if __name__ == "__main__":
     server = Server()
+    server.load_state()
     try:
         while True:
-            game_data = server.get_game_data()
+            game_data = server.get_msg()
             server.square_spam_strat()
     except:
         server.close()
