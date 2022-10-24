@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -69,7 +71,7 @@ def msg_to_nn_inputs(data):
 
 
 def fitness_func(solution, sol_idx):
-    global gann, server, fits
+    global gann, server, best_solution, best_solution_fitness
 
     server.load_state()
     done = False
@@ -89,6 +91,8 @@ def fitness_func(solution, sol_idx):
     print(f"{sol_idx} ", end="")
 
     fitness = data["player_hp"] - data["boss_hp"]
+    if fitness > best_solution_fitness:
+        best_solution = gann.population_networks[sol_idx]
     return fitness
 
 
@@ -117,23 +121,22 @@ def bot():
     )
 
     ga = pygad.GA(
-        num_generations=10,
+        num_generations=200,
         num_parents_mating=2,
         fitness_func=fitness_func,
         initial_population=population_vectors.copy(),
         keep_elitism=1,
         on_generation=callback_generation,
         save_best_solutions=True,
-        # parallel_processing=["process", 8],
     )
+
+    best_solution = None
+    best_solution_fitness = -49
     ga.run()
     ga.plot_fitness(save_dir="fitness.png")
     ga.save("model")
-
-    # solution, solution_fitness, solution_idx = ga.best_solution()
-    # print(f"Parameters of the best solution : {solution}")
-    # print(f"Fitness value of the best solution = {solution_fitness}")
-    # print(f"Index of the best solution: {solution_idx}")
+    with open("nn.pkl", "wb") as fp:
+        pickle.dump(best_solution, fp)
 
 
 if __name__ == "__main__":

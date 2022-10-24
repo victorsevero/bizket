@@ -171,3 +171,4 @@ garbage/
 # model outputs
 /fitness.png
 /model.pkl
+/nn.pkl
