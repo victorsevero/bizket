@@ -165,8 +165,9 @@ cython_debug/
 # local garbage
 garbage/
 
-# lua script por quick test purposes
+# scripts for quick test purposes
 /test.lua
+/test.py
 
 # model outputs
 /results*

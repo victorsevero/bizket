@@ -7,8 +7,137 @@ import numpy as np
 import pygad
 import pygad.nn
 import pygad.gann
+from tqdm import trange, tqdm
 
 from server import Server
+
+
+def bot():
+    global best_solution, model_kwargs
+    population_vectors = pygad.gann.population_as_vectors(
+        population_networks=gann.population_networks
+    )
+
+    model = pygad.GA(
+        initial_population=population_vectors.copy(),
+        **model_kwargs,
+    )
+
+    model.run()
+    now_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    results_dir = f"results/{now_str}"
+    os.makedirs(results_dir)
+    model.plot_fitness(save_dir=f"{results_dir}/fitness.png")
+    with open(f"{results_dir}/model.pkl", "wb") as fp:
+        pickle.dump(best_solution, fp)
+
+
+def run_saved_model(filename=None):
+    if filename is None:
+        filename = sorted(list_dirs())[-1] + "/model.pkl"
+
+    with open(filename, "rb") as fp:
+        nn = pickle.load(fp)
+
+    game_loop(nn)
+
+
+def fitness_func(solution, sol_idx):
+    global gann, server, best_solution, best_fitness, p_bar1
+
+    data = game_loop(gann.population_networks[sol_idx])
+
+    fitness = calc_fitness(data)
+    if fitness > best_fitness:
+        best_fitness = fitness
+        best_solution = deepcopy(gann.population_networks[sol_idx])
+
+    p_bar1.update()
+    p_bar1.refresh()
+
+    return fitness
+
+
+def game_loop(last_layer):
+    global server
+
+    server.load_state()
+    for _ in range(60 * 60):
+        data = server.get_msg()
+        data_inputs = msg_to_nn_inputs(data)
+        buttons = pygad.nn.predict(
+            last_layer=last_layer,
+            data_inputs=data_inputs,
+        )
+        joypad_msg = buttons_map(buttons)
+        server.send_msg(joypad_msg)
+        if (data["player_hp"] == 0) or (data["boss_hp"] == 0):
+            break
+
+    return data
+
+
+def msg_to_nn_inputs(data):
+    data_inputs = data.copy()
+    data_inputs.pop("player_hp")
+    data_inputs.pop("boss_hp")
+
+    data_inputs = abs_to_relative(data_inputs)
+
+    data_inputs = np.array([[*data_inputs.values()]])
+    return data_inputs
+
+
+def abs_to_relative(data):
+    data = data.copy()
+    data["boss_x"] = data["boss_x"] - data["player_x"]
+    data["boss_y"] = data["boss_y"] - data["player_y"]
+    data["player_x"] = data["player_x"] - (0x12EF + 0x115D) / 2
+    data["player_y"] = data["player_y"] - (0x01BA + 0x008D) / 2
+
+    data["boss_x"] = scaler(
+        data["boss_x"],
+        value_min=0x115D - 0x12EF,
+        value_max=0x12EF - 0x115D,
+    )
+    data["boss_y"] = scaler(
+        data["boss_y"],
+        value_min=0x008D - 0x01BA,
+        value_max=0x01BA - 0x008D,
+        scale_min=1,
+        scale_max=-1,  # TODO: try centralizing Zero to jump distance (0 here and change Y center point above)
+    )
+    data["player_x"] = scaler(
+        data["player_x"],
+        value_min=(0x115D - 0x12EF) / 2,
+        value_max=(0x12EF - 0x115D) / 2,
+    )
+    data["player_y"] = scaler(
+        data["player_y"],
+        value_min=(0x008D - 0x01BA) / 2,
+        value_max=(0x01BA - 0x008D) / 2,
+        scale_min=1,
+        scale_max=-1,
+    )
+
+    return data
+
+
+def scaler(value, value_min, value_max, scale_min=-1, scale_max=1):
+    value_std = (value - value_min) / (value_max - value_min)
+    return value_std * (scale_max - scale_min) + scale_min
+
+
+def calc_fitness(data):
+    boss_weight = 32
+    fitness = scaler(
+        data["player_hp"] - boss_weight * data["boss_hp"],
+        value_min=-boss_weight * 48,
+        value_max=32,
+        scale_min=0,
+        scaler_max=100,
+    )
+    return fitness
 
 
 def buttons_map(buttons):
@@ -30,154 +159,64 @@ def buttons_map(buttons):
     return joypad_msg
 
 
-def x_scaler(x):
-    x_min = 4445
-    x_max = 4847
-    x_std = (x - x_min) / (x_max - x_min)
-    return 2 * x_std - 1
-
-
-def y_scaler(y):
-    y_min = 141
-    y_max = 442
-    y_std = (y - y_min) / (y_max - y_min)
-    return 2 * y_std - 1
-
-
-def msg_to_nn_inputs(data):
-    data_inputs = data.copy()
-    data_inputs.pop("player_hp")
-    data_inputs.pop("boss_hp")
-
-    data_inputs["player_x"] = x_scaler(data_inputs["player_x"])
-    data_inputs["player_y"] = y_scaler(data_inputs["player_y"])
-    data_inputs["boss_x"] = x_scaler(data_inputs["boss_x"])
-    data_inputs["boss_y"] = y_scaler(data_inputs["boss_y"])
-
-    data_inputs = np.array([[*data_inputs.values()]])
-    return data_inputs
-
-
-def game_loop(last_layer):
-    global server
-
-    server.load_state()
-    for _ in range(60 * 20):
-        data = server.get_msg()
-        data_inputs = msg_to_nn_inputs(data)
-        buttons = pygad.nn.predict(
-            last_layer=last_layer,
-            data_inputs=data_inputs,
-        )
-        joypad_msg = buttons_map(buttons)
-        server.send_msg(joypad_msg)
-        if (data["player_hp"] == 0) or (data["boss_hp"] == 0):
-            break
-
-    return data
-
-
-def calc_fitness(data):
-    return data["player_hp"] - data["boss_hp"]
-
-
-def fitness_func(solution, sol_idx):
-    global gann, server, best_solution, best_fitness
-
-    data = game_loop(gann.population_networks[sol_idx])
-    print(f"{sol_idx} ", end="")
-
-    fitness = calc_fitness(data)
-    if fitness > best_fitness:
-        best_fitness = fitness
-        best_solution = deepcopy(gann.population_networks[sol_idx])
-    return fitness
-
-
-def callback_generation(ga):
-    global gann
+def callback_generation(model):
+    global gann, p_bar0, p_bar1
 
     population_matrices = pygad.gann.population_as_matrices(
         population_networks=gann.population_networks,
-        population_vectors=ga.population,
+        population_vectors=model.population,
     )
 
     gann.update_population_trained_weights(
         population_trained_weights=population_matrices
     )
-    print("")
-    print(f"Generation = {ga.generations_completed}")
-    print(
-        f"Fitness    = {ga.best_solutions_fitness[ga.generations_completed-1]}"
-    )
-    pass
-
-
-def bot():
-    global best_solution
-    population_vectors = pygad.gann.population_as_vectors(
-        population_networks=gann.population_networks
-    )
-
-    ga = pygad.GA(
-        num_generations=10,
-        num_parents_mating=2,
-        fitness_func=fitness_func,
-        initial_population=population_vectors.copy(),
-        keep_elitism=1,
-        on_generation=callback_generation,
-        save_best_solutions=True,
-    )
-
-    ga.run()
-    now_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    results_dir = f"results/{now_str}"
-    os.makedirs(results_dir)
-    ga.plot_fitness(save_dir=f"{results_dir}/fitness.png")
-    with open(f"{results_dir}/model.pkl", "wb") as fp:
-        pickle.dump(best_solution, fp)
-
-
-def reshape_weights(weights):
-    i = gann.num_neurons_input
-    j = gann.num_neurons_hidden_layers[0]
-    k = gann.num_neurons_output
-
-    w1 = weights[: i * j].reshape(i, j)
-    w2 = weights[i * j :].reshape(j, k)
-    return [w1, w2]
+    fitness = model.best_solutions_fitness[model.generations_completed - 1]
+    tqdm.write(f"Fitness = {fitness:1f}")
+    p_bar0.update()
+    p_bar0.refresh()
+    p_bar1.n = 0
+    p_bar1.refresh()
 
 
 def list_dirs(path="results/"):
     return [path + x for x in os.listdir(path) if os.path.isdir(path + x)]
 
 
-def run_saved_model(filename=None):
-    if filename is None:
-        filename = sorted(list_dirs())[-1] + "/model.pkl"
-
-    with open(filename, "rb") as fp:
-        nn = pickle.load(fp)
-
-    data = game_loop(nn)
-    print(calc_fitness(data))
-
-
 if __name__ == "__main__":
-    gann = pygad.gann.GANN(
-        num_solutions=10,
-        num_neurons_input=4,
-        num_neurons_hidden_layers=[5],
-        num_neurons_output=5,
-        hidden_activations="relu",
-        output_activation="softmax",
-    )
+    gann_kwargs = {
+        "num_solutions": 10,
+        "num_neurons_input": 4,
+        "num_neurons_hidden_layers": [10, 10],
+        "num_neurons_output": 5,
+        "hidden_activations": "relu",
+        "output_activation": "softmax",
+    }
+    gann = pygad.gann.GANN(**gann_kwargs)
+
+    model_kwargs = {
+        "num_generations": 200,
+        "num_parents_mating": 1,
+        "fitness_func": fitness_func,
+        "keep_elitism": 2,
+        "on_generation": callback_generation,
+        "save_best_solutions": True,
+        "suppress_warnings": True,
+    }
 
     server = Server()
     best_solution = None
     best_fitness = -49
 
-    bot()
-    # run_saved_model()
+    p_bar0 = trange(
+        model_kwargs["num_generations"],
+        desc="Generation",
+        position=0,
+    )
+    p_bar1 = trange(
+        gann_kwargs["num_solutions"],
+        desc="Individual",
+        position=1,
+    )
 
-# list 10 lists 2 arrays (4, 5), (5, 5)
+    # bot()
+    run_saved_model()
