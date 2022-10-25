@@ -169,6 +169,7 @@ garbage/
 /test.lua
 
 # model outputs
+/results*
 /fitness.png
 /model.pkl
 /nn.pkl
