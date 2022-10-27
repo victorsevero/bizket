@@ -33,13 +33,18 @@ def bot():
 
 
 def run_saved_model(filename=None):
+    nn = load_model(filename)
+    game_loop(nn)
+
+
+def load_model(filename=None):
     if filename is None:
         filename = sorted(list_dirs())[-1] + "/model.pkl"
 
     with open(filename, "rb") as fp:
         nn = pickle.load(fp)
 
-    game_loop(nn)
+    return nn
 
 
 def fitness_func(solution, sol_idx):
@@ -135,7 +140,7 @@ def calc_fitness(data):
         value_min=-boss_weight * 48,
         value_max=32,
         scale_min=0,
-        scaler_max=100,
+        scale_max=100,
     )
     return fitness
 
@@ -171,7 +176,7 @@ def callback_generation(model):
         population_trained_weights=population_matrices
     )
     fitness = model.best_solutions_fitness[model.generations_completed - 1]
-    tqdm.write(f"Fitness = {fitness:1f}")
+    tqdm.write(f"Fitness = {fitness:.3f}")
     p_bar0.update()
     p_bar0.refresh()
     p_bar1.n = 0
@@ -218,5 +223,12 @@ if __name__ == "__main__":
         position=1,
     )
 
-    # bot()
-    run_saved_model()
+    # nn = load_model()
+    # population_networks = []
+    # for _ in range(gann_kwargs["num_solutions"]):
+    #     population_networks.append(deepcopy(nn))
+
+    # gann.population_networks = population_networks
+    bot()
+
+    # run_saved_model()
