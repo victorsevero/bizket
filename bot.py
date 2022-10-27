@@ -229,6 +229,6 @@ if __name__ == "__main__":
     #     population_networks.append(deepcopy(nn))
 
     # gann.population_networks = population_networks
-    bot()
+    # bot()
 
-    # run_saved_model()
+    run_saved_model()
