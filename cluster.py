@@ -18,19 +18,22 @@ def start_game():
     )
 
 
-if __name__ == "__main__":
-    server = Server()
-
-    for i in range(2):
+def cluster_test(n):
+    server = Server(n_connections=n)
+    for i in range(n):
         start_game()
         server.accept_connection()
-    server.load_state(0)
-    server.load_state(1)
     try:
         while True:
-            game_data = server.get_msg(0)
-            server.square_spam_strat(0)
-            game_data = server.get_msg(1)
-            server.x_spam_strat(1)
+            for i in range(n):
+                server.get_msg(i)
+                if i % 2 == 0:
+                    server.square_spam_strat(i)
+                else:
+                    server.x_spam_strat(i)
     except:
         server.close()
+
+
+if __name__ == "__main__":
+    cluster_test(8)

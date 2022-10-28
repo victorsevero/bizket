@@ -1,5 +1,5 @@
 import socket
-from typing import Dict
+from typing import Dict, List
 
 
 class Server:
@@ -10,7 +10,7 @@ class Server:
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._bind_server(n_connections)
         self._n_connections = n_connections
-        self._connections = []
+        self.connections: List[Connection] = []
 
     def _bind_server(self, n_connections):
         print(f"Starting server on {self.ip}:{self.port}")
@@ -18,21 +18,49 @@ class Server:
         self._socket.listen(n_connections)
 
     def accept_connection(self):
-        if len(self._connections) == self._n_connections:
+        if len(self.connections) == self._n_connections:
             raise Exception("Already at maximum number of connections")
         print("Waiting for a connection")
         connection, client_address = self._socket.accept()
-        self._connections.append(_Connection(connection))
+        self.connections.append(Connection(connection))
         print("Connection from {}:{}".format(*client_address))
 
     def get_game_data(self, i):
-        msg = self.get_msg(i)
+        return self.connections[i].get_game_data()
+
+    def get_msg(self, i):
+        return self.connections[i].get_msg()
+
+    def send_msg(self, msg, i):
+        self.connections[i].send_msg(msg)
+
+    def square_spam_strat(self, i):
+        self.connections[i].square_spam_strat()
+
+    def x_spam_strat(self, i):
+        self.connections[i].x_spam_strat()
+
+    def load_state(self, i):
+        self.connections[i].load_state()
+
+    def close(self):
+        for connection in self.connections:
+            connection.close()
+
+
+class Connection:
+    def __init__(self, connection):
+        self._connection = connection
+        self.frame = 0
+
+    def get_game_data(self):
+        msg = self.get_msg()
         self.send_msg("ok")
 
         return msg
 
-    def get_msg(self, i):
-        data = self._connections[i].recv(1024)
+    def get_msg(self):
+        data = self._connection.recv(1024)
         if data:
             return self._decode_msg(data)
 
@@ -49,8 +77,9 @@ class Server:
 
         return data_dict
 
-    def send_msg(self, msg: str, i: int = 0):
-        self._connections[i].sendall(self._encode_msg(msg))
+    def send_msg(self, msg: str):
+        self._connection.sendall(self._encode_msg(msg))
+        self.frame += 1
 
     @staticmethod
     def _encode_msg(string: str) -> bytes:
@@ -59,44 +88,29 @@ class Server:
 
         return msg
 
-    def square_spam_strat(self, i):
-        if self._connections[i].frame % 21 == 0:
+    def square_spam_strat(self):
+        if self.frame % 21 == 0:
             msg = "s"
         else:
             msg = "ok"
-        self.send_msg(msg, i)
+        self.send_msg(msg)
 
-    def x_spam_strat(self, i):
-        if self._connections[i].frame % 21 == 0:
+    def x_spam_strat(self):
+        if self.frame % 21 == 0:
             msg = "x"
         else:
             msg = "ok"
-        self.send_msg(msg, i)
+        self.send_msg(msg)
 
     def close(self):
-        for connection in self._connections:
-            connection.close()
+        self.get_msg()
+        self.send_msg("close")
+        self._connection.close()
 
-    def load_state(self, i):
-        self.get_msg(i)
-        self.send_msg("load", i)
-        self._connections[i].frame = 0
-
-
-class _Connection:
-    def __init__(self, connection):
-        self.connection = connection
+    def load_state(self):
+        self.get_msg()
+        self.send_msg("load")
         self.frame = 0
-
-    def recv(self, *args, **kwargs):
-        self.connection.recv(*args, **kwargs)
-
-    def sendall(self, *args, **kwargs):
-        self.connection.sendall(*args, **kwargs)
-        self.frame += 1
-
-    def close(self):
-        self.connection.close()
 
 
 if __name__ == "__main__":

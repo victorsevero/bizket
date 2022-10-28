@@ -84,6 +84,8 @@ while true do
     local response = comm.socketServerResponse()
     if response == "load" then
         savestate.loadslot(3)
+    elseif response == "close" then
+        client.exit()
     elseif response ~= "ok" then
         set_commands(response)
     end
