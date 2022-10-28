@@ -75,6 +75,7 @@ local set_commands = function(commands)
     joypad.set(buttons, 1)
 end
 
+client.setwindowsize(1)
 comm.socketServerSetTimeout(10000)
 
 while true do
