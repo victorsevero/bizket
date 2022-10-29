@@ -2,6 +2,7 @@ from subprocess import Popen
 import multiprocessing as mp
 
 from server import Server
+from emulator_grid import set_emulator_grid, close_emulators
 
 
 def start_game():
@@ -42,16 +43,25 @@ def mp_cluster_test(n):
 
 
 def process_func(i):
-    for _ in range(60 * 3 * 5):
-        server.get_msg(i)
-        server.square_spam_strat(i)
-    server.connections[i].close()
+    try:
+        for _ in range(60 * 3 * 5):
+            server.get_msg(i)
+            if i % 2:
+                server.square_spam_strat(i)
+            else:
+                server.x_spam_strat(i)
+    finally:
+        server.connections[i].close()
 
 
 if __name__ == "__main__":
-    n = 2
+    n = 8
     server = Server(n_connections=n)
     for i in range(n):
         start_game()
         server.accept_connection()
-    mp_cluster_test(n)
+    handles = set_emulator_grid()
+    try:
+        mp_cluster_test(n)
+    except:
+        close_emulators(handles)
