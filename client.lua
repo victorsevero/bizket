@@ -76,6 +76,7 @@ local set_commands = function(commands)
 end
 
 comm.socketServerSetTimeout(10000)
+-- client.invisibleemulation(true)
 
 while true do
     assert(memory.usememorydomain("MainRAM"))
@@ -87,7 +88,9 @@ while true do
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        set_commands(response)
+        for _ = 1, 4 do
+            set_commands(response)
+            emu.frameadvance()
+        end
     end
-    emu.frameadvance()
 end

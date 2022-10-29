@@ -1,8 +1,6 @@
 import os
 import pickle
 from datetime import datetime
-from copy import deepcopy
-import multiprocessing as mp
 
 import numpy as np
 import pygad
@@ -14,25 +12,32 @@ from server import Server
 from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
-def bot(n_processes=8):
-    global best_solution, model_kwargs
+def bot():
+    global model_kwargs
     population_vectors = pygad.gann.population_as_vectors(
         population_networks=gann.population_networks
     )
 
     model = pygad.GA(
         initial_population=population_vectors.copy(),
-        parallel_processing=["process", n_processes],
         **model_kwargs,
     )
+    try:
+        model.run()
+    finally:
+        close_emulators(handles)
+        try:
+            server.close()
+        except:
+            ...
 
-    model.run()
-    now_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    results_dir = f"results/{now_str}"
-    os.makedirs(results_dir)
-    model.plot_fitness(save_dir=f"{results_dir}/fitness.png")
-    with open(f"{results_dir}/model.pkl", "wb") as fp:
-        pickle.dump(best_solution, fp)
+        now_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        results_dir = f"results/{now_str}"
+        os.makedirs(results_dir)
+        model.plot_fitness(save_dir=f"{results_dir}/fitness.png")
+        os.rename("tmp_model.pkl", f"{results_dir}/model.pkl")
+        # with open(f"{results_dir}/model.pkl", "wb") as fp:
+        #     pickle.dump(best_solution, fp)
 
 
 def run_saved_model(filename=None):
@@ -51,7 +56,7 @@ def load_model(filename=None):
 
 
 def fitness_func(solution, sol_idx):
-    global gann, server, best_solution, best_fitness, p_bar1, n_processes
+    global gann, server, best_fitness, n_processes
 
     conn_idx = sol_idx % n_processes
 
@@ -60,10 +65,8 @@ def fitness_func(solution, sol_idx):
     fitness = calc_fitness(data)
     if fitness > best_fitness:
         best_fitness = fitness
-        best_solution = deepcopy(gann.population_networks[sol_idx])
-
-    p_bar1.update()
-    p_bar1.refresh()
+        with open(f"tmp_model.pkl", "wb") as fp:
+            pickle.dump(gann.population_networks[sol_idx], fp)
 
     return fitness
 
@@ -72,7 +75,7 @@ def game_loop(last_layer, conn_idx):
     global server
 
     server.load_state(conn_idx)
-    for _ in range(60 * 60):
+    for _ in range(60 // 4 * 60):
         data = server.get_msg(conn_idx)
         data_inputs = msg_to_nn_inputs(data)
         buttons = pygad.nn.predict(
@@ -115,7 +118,7 @@ def abs_to_relative(data):
         value_min=0x008D - 0x01BA,
         value_max=0x01BA - 0x008D,
         scale_min=1,
-        scale_max=-1,  # TODO: try centralizing Zero to jump distance (0 here and change Y center point above)
+        scale_max=-1,  # TODO: try centralizing char to jump distance (0 here and change Y center point above)
     )
     data["player_x"] = scaler(
         data["player_x"],
@@ -139,8 +142,8 @@ def scaler(value, value_min, value_max, scale_min=-1, scale_max=1):
 
 
 def calc_fitness(data):
-    # boss_weight = 32
-    boss_weight = 1
+    boss_weight = 32
+    # boss_weight = 1
     fitness = scaler(
         data["player_hp"] - boss_weight * data["boss_hp"],
         value_min=-boss_weight * 48,
@@ -171,7 +174,7 @@ def buttons_map(buttons):
 
 
 def callback_generation(model):
-    global gann, p_bar0, p_bar1
+    global gann, p_bar, p_bar1
 
     population_matrices = pygad.gann.population_as_matrices(
         population_networks=gann.population_networks,
@@ -182,11 +185,9 @@ def callback_generation(model):
         population_trained_weights=population_matrices
     )
     fitness = model.best_solutions_fitness[model.generations_completed - 1]
-    tqdm.write(f"Fitness = {fitness:.3f}")
-    p_bar0.update()
-    p_bar0.refresh()
-    p_bar1.n = 0
-    p_bar1.refresh()
+    tqdm.write(f"Fitness = {fitness:.2f}")
+    p_bar.update()
+    p_bar.refresh()
 
 
 def list_dirs(path="results/"):
@@ -194,10 +195,12 @@ def list_dirs(path="results/"):
 
 
 if __name__ == "__main__":
+    n_processes = 8
+
     gann_kwargs = {
-        "num_solutions": 10,
+        "num_solutions": n_processes,
         "num_neurons_input": 4,
-        "num_neurons_hidden_layers": [10, 10],
+        "num_neurons_hidden_layers": [5],
         "num_neurons_output": 5,
         "hidden_activations": "relu",
         "output_activation": "softmax",
@@ -208,13 +211,20 @@ if __name__ == "__main__":
         "num_generations": 200,
         "num_parents_mating": 1,
         "fitness_func": fitness_func,
-        "keep_elitism": 2,
+        "keep_elitism": 1,
+        "crossover_type": None,
+        "mutation_type": "random",
+        "mutation_probability": 0.1,
+        "mutation_by_replacement": True,
+        "random_mutation_min_val": -1.0,
+        "random_mutation_max_val": 1.0,
+        "gene_space": {"low": -1, "high": 1},
         "on_generation": callback_generation,
         "save_best_solutions": True,
         "suppress_warnings": True,
+        "parallel_processing": ["process", n_processes],
+        "random_seed": 666,
     }
-
-    n_processes = 8
 
     server = Server(n_connections=n_processes)
     for _ in range(n_processes):
@@ -225,15 +235,10 @@ if __name__ == "__main__":
     best_solution = None
     best_fitness = -1
 
-    p_bar0 = trange(
+    p_bar = trange(
         model_kwargs["num_generations"],
         desc="Generation",
         position=0,
-    )
-    p_bar1 = trange(
-        gann_kwargs["num_solutions"],
-        desc="Individual",
-        position=1,
     )
 
     # nn = load_model()
@@ -242,10 +247,6 @@ if __name__ == "__main__":
     #     population_networks.append(deepcopy(nn))
 
     # gann.population_networks = population_networks
-    try:
-        bot(n_processes=n_processes)
-    finally:
-        server.close()
-        close_emulators(handles)
+    bot()
 
     # run_saved_model()
