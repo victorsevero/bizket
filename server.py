@@ -3,7 +3,7 @@ from typing import Dict, List
 
 
 class Server:
-    def __init__(self, ip="localhost", port=6969, n_connections=2):
+    def __init__(self, n_connections, ip="localhost", port=6969):
         self.ip = ip
         self.port = port
 

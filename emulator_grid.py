@@ -4,6 +4,21 @@ import subprocess
 SCREEN_X = 2560
 
 
+def start_emulator():
+    subprocess.Popen(
+        "/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe"
+        # + " --config=python.ini"
+        + " --load-slot=3"
+        # + " --lua=client.lua"
+        + " --socket_ip=127.0.1" + " --socket_port=6969",
+        # + ' "roms/Mega Man X4 (USA).bin"',
+        shell=True,
+        stdin=None,
+        stdout=None,
+        stderr=None,
+    )
+
+
 def get_handles():
     proc = subprocess.Popen(
         [

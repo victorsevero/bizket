@@ -2,6 +2,7 @@ import os
 import pickle
 from datetime import datetime
 from copy import deepcopy
+import multiprocessing as mp
 
 import numpy as np
 import pygad
@@ -10,9 +11,10 @@ import pygad.gann
 from tqdm import trange, tqdm
 
 from server import Server
+from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
-def bot():
+def bot(n_processes=8):
     global best_solution, model_kwargs
     population_vectors = pygad.gann.population_as_vectors(
         population_networks=gann.population_networks
@@ -20,6 +22,7 @@ def bot():
 
     model = pygad.GA(
         initial_population=population_vectors.copy(),
+        parallel_processing=["process", n_processes],
         **model_kwargs,
     )
 
@@ -48,9 +51,11 @@ def load_model(filename=None):
 
 
 def fitness_func(solution, sol_idx):
-    global gann, server, best_solution, best_fitness, p_bar1
+    global gann, server, best_solution, best_fitness, p_bar1, n_processes
 
-    data = game_loop(gann.population_networks[sol_idx])
+    conn_idx = sol_idx % n_processes
+
+    data = game_loop(gann.population_networks[sol_idx], conn_idx)
 
     fitness = calc_fitness(data)
     if fitness > best_fitness:
@@ -63,19 +68,19 @@ def fitness_func(solution, sol_idx):
     return fitness
 
 
-def game_loop(last_layer):
+def game_loop(last_layer, conn_idx):
     global server
 
-    server.load_state()
+    server.load_state(conn_idx)
     for _ in range(60 * 60):
-        data = server.get_msg()
+        data = server.get_msg(conn_idx)
         data_inputs = msg_to_nn_inputs(data)
         buttons = pygad.nn.predict(
             last_layer=last_layer,
             data_inputs=data_inputs,
         )
         joypad_msg = buttons_map(buttons)
-        server.send_msg(joypad_msg)
+        server.send_msg(joypad_msg, conn_idx)
         if (data["player_hp"] == 0) or (data["boss_hp"] == 0):
             break
 
@@ -134,7 +139,8 @@ def scaler(value, value_min, value_max, scale_min=-1, scale_max=1):
 
 
 def calc_fitness(data):
-    boss_weight = 32
+    # boss_weight = 32
+    boss_weight = 1
     fitness = scaler(
         data["player_hp"] - boss_weight * data["boss_hp"],
         value_min=-boss_weight * 48,
@@ -208,9 +214,16 @@ if __name__ == "__main__":
         "suppress_warnings": True,
     }
 
-    server = Server()
+    n_processes = 8
+
+    server = Server(n_connections=n_processes)
+    for _ in range(n_processes):
+        start_emulator()
+        server.accept_connection()
+    handles = set_emulator_grid()
+
     best_solution = None
-    best_fitness = -49
+    best_fitness = -1
 
     p_bar0 = trange(
         model_kwargs["num_generations"],
@@ -229,6 +242,10 @@ if __name__ == "__main__":
     #     population_networks.append(deepcopy(nn))
 
     # gann.population_networks = population_networks
-    # bot()
+    try:
+        bot(n_processes=n_processes)
+    finally:
+        server.close()
+        close_emulators(handles)
 
-    run_saved_model()
+    # run_saved_model()
