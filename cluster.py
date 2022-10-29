@@ -38,30 +38,29 @@ def cluster_test(n):
 
 
 def mp_cluster_test(n):
-    with mp.Pool(n) as p:
-        p.map(process_func, range(n))
-
-
-def process_func(i):
-    try:
-        for _ in range(60 * 3 * 5):
-            server.get_msg(i)
-            if i % 2:
-                server.square_spam_strat(i)
-            else:
-                server.x_spam_strat(i)
-    finally:
-        server.connections[i].close()
-
-
-if __name__ == "__main__":
-    n = 8
     server = Server(n_connections=n)
-    for i in range(n):
+    for _ in range(n):
         start_game()
         server.accept_connection()
     handles = set_emulator_grid()
     try:
-        mp_cluster_test(n)
-    except:
+        with mp.Pool(n) as p:
+            p.starmap(process_func, zip(range(n), server.connections))
+    finally:
         close_emulators(handles)
+
+
+def process_func(i, connection):
+    try:
+        for _ in range(60 * 3 * 5):
+            connection.get_msg()
+            if i % 2:
+                connection.square_spam_strat()
+            else:
+                connection.x_spam_strat()
+    finally:
+        connection.close()
+
+
+if __name__ == "__main__":
+    mp_cluster_test(2)
