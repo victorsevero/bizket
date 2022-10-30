@@ -6,11 +6,11 @@ local get_player_hp = function()
 end
 
 local get_player_x = function()
-    return memory.read_u16_le(0x13B7F0)
+    return memory.read_u16_le(0x1418D2)
 end
 
 local get_player_y = function()
-    return memory.read_u16_le(0x13B7F4)
+    return memory.read_u16_le(0x1418D6)
 end
 
 local get_boss_hp = function()
@@ -23,7 +23,7 @@ local get_boss_x = function()
 end
 
 local get_boss_y = function()
-    return memory.read_u16_le(0x13BEEE)
+    return memory.read_u16_le(0x13BEDE)
 end
 
 local make_msg = function(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
@@ -76,7 +76,7 @@ local set_commands = function(commands)
 end
 
 comm.socketServerSetTimeout(10000)
--- client.invisibleemulation(true)
+client.invisibleemulation(false)
 
 while true do
     assert(memory.usememorydomain("MainRAM"))

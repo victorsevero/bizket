@@ -7,13 +7,17 @@ import pygad
 import pygad.nn
 import pygad.gann
 from tqdm import trange, tqdm
+import seaborn as sns
 
 from server import Server
 from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
+sns.set_theme()
+
+
 def bot():
-    global model_kwargs
+    global model_kwargs, handles
     population_vectors = pygad.gann.population_as_vectors(
         population_networks=gann.population_networks
     )
@@ -34,25 +38,31 @@ def bot():
         now_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         results_dir = f"results/{now_str}"
         os.makedirs(results_dir)
+        model.save(f"{results_dir}/model")
         model.plot_fitness(save_dir=f"{results_dir}/fitness.png")
-        os.rename("tmp_model.pkl", f"{results_dir}/model.pkl")
-        # with open(f"{results_dir}/model.pkl", "wb") as fp:
-        #     pickle.dump(best_solution, fp)
 
 
 def run_saved_model(filename=None):
-    nn = load_model(filename)
-    game_loop(nn)
+    model = load_model(filename)
+
+    weights = model.best_solution(model.last_generation_fitness)[0]
+    weights = [weights[:20].reshape(4, 5), weights[20:].reshape(5, 5)]
+    nn = gann.population_networks[0]
+    pygad.nn.update_layers_trained_weights(nn, weights)
+
+    data = game_loop(nn, 0)
+    print(calc_fitness(data))
 
 
 def load_model(filename=None):
+    global gann, n_processes
     if filename is None:
         filename = sorted(list_dirs())[-1] + "/model.pkl"
 
     with open(filename, "rb") as fp:
-        nn = pickle.load(fp)
+        model = pickle.load(fp)
 
-    return nn
+    return model
 
 
 def fitness_func(solution, sol_idx):
@@ -65,8 +75,6 @@ def fitness_func(solution, sol_idx):
     fitness = calc_fitness(data)
     if fitness > best_fitness:
         best_fitness = fitness
-        with open(f"tmp_model.pkl", "wb") as fp:
-            pickle.dump(gann.population_networks[sol_idx], fp)
 
     return fitness
 
@@ -174,7 +182,7 @@ def buttons_map(buttons):
 
 
 def callback_generation(model):
-    global gann, p_bar, p_bar1
+    global gann, p_bar
 
     population_matrices = pygad.gann.population_as_matrices(
         population_networks=gann.population_networks,
@@ -185,7 +193,8 @@ def callback_generation(model):
         population_trained_weights=population_matrices
     )
     fitness = model.best_solutions_fitness[model.generations_completed - 1]
-    tqdm.write(f"Fitness = {fitness:.2f}")
+
+    tqdm.write(f"Fitness = {fitness:#.3g}%")
     p_bar.update()
     p_bar.refresh()
 
@@ -208,7 +217,7 @@ if __name__ == "__main__":
     gann = pygad.gann.GANN(**gann_kwargs)
 
     model_kwargs = {
-        "num_generations": 200,
+        "num_generations": 100,
         "num_parents_mating": 1,
         "fitness_func": fitness_func,
         "keep_elitism": 1,
@@ -249,4 +258,6 @@ if __name__ == "__main__":
     # gann.population_networks = population_networks
     bot()
 
-    # run_saved_model()
+    server = Server(n_connections=1)
+    server.accept_connection()
+    run_saved_model()
