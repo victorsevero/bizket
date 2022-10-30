@@ -258,6 +258,6 @@ if __name__ == "__main__":
     # gann.population_networks = population_networks
     bot()
 
-    server = Server(n_connections=1)
-    server.accept_connection()
-    run_saved_model()
+    # server = Server(n_connections=1)
+    # server.accept_connection()
+    # run_saved_model()
