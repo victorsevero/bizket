@@ -1,5 +1,7 @@
 import subprocess
 
+from server import Server
+
 
 SCREEN_X = 2560
 
@@ -77,6 +79,16 @@ def set_emulator_grid():
         move_window(handle, i)
 
     return handles
+
+
+def full_emulator_setup(n_connections):
+    server = Server(n_connections=n_connections)
+    for _ in range(n_connections):
+        start_emulator()
+        server.accept_connection()
+    handles = set_emulator_grid()
+
+    return server, handles
 
 
 if __name__ == "__main__":

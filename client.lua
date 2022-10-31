@@ -88,7 +88,7 @@ while true do
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        for _ = 1, 4 do
+        for _ = 1, 15 do
             set_commands(response)
             emu.frameadvance()
         end

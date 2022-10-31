@@ -4,24 +4,22 @@ from gym import spaces
 from stable_baselines3.common.env_checker import check_env
 
 from server import Server
-from emulator_grid import start_emulator, set_emulator_grid, close_emulators
+from emulator_grid import start_emulator
 
 
 class Mmx4Env(gym.Env):
     CENTER_X = (0x12EF + 0x115D) / 2
     CENTER_Y = (0x01BA + 0x008D) / 2
 
-    def __init__(self, n_connections=1, time=60):
+    def __init__(self, connection=None, time=60):
         self.observation_space = spaces.Dict(
             {
-                "player_hp": spaces.Discrete(32 + 1, start=0),
                 "player_position": spaces.Box(
                     low=-1,
                     high=1,
                     shape=(2,),
                     dtype=float,
                 ),
-                "boss_hp": spaces.Discrete(48 + 1, start=0),
                 "boss_position": spaces.Box(
                     low=-1,
                     high=1,
@@ -40,29 +38,29 @@ class Mmx4Env(gym.Env):
             4: "square",
         }
 
-        self._init_game(n_connections=n_connections)
+        if connection is None:
+            self._init_single_game()
+        else:
+            self.connection = connection
+
         # 60 frames = 1 second, but it always skips 4 frames on each iteration
-        self.max_steps = (60 // 4) * time
+        self.max_steps = (60 // 15) * time
         self.frame = 0
 
     def _get_obs(self):
         return {
-            "player_hp": self._player_hp,
             "player_position": self._player_position,
-            "boss_hp": self._boss_hp,
             "boss_position": self._boss_position,
         }
 
     def _get_info(self):
         return self._get_obs()
 
-    # Error while checking key=boss_hp: The observation returned by the `reset()`
-    # method does not match the given observation space
     def reset(self, seed=None, options=None):
         self.frame = 0
-        self.server.load_state(0)
+        self.connection.load_state()
 
-        data = self.server.get_msg(0)
+        data = self.connection.get_msg()
         (
             self._player_hp,
             self._player_position,
@@ -79,8 +77,8 @@ class Mmx4Env(gym.Env):
         past_player_hp = self._player_hp
         past_boss_hp = self._boss_hp
 
-        self.server.send_msg(self._action_to_button[action], 0)
-        data = self.server.get_msg(0)
+        self.connection.send_msg(self._action_to_button[action])
+        data = self.connection.get_msg()
         (
             self._player_hp,
             self._player_position,
@@ -95,6 +93,12 @@ class Mmx4Env(gym.Env):
         reward = boss_weight * (past_boss_hp - self._boss_hp) - (
             past_player_hp - self._player_hp
         )
+
+        reward = self._scaler(
+            reward,
+            value_min=-5,  # highest dmg from Boss
+            value_max=boss_weight * 5,  # X charged buster or Zero saber
+        )
         truncated = self.frame >= self.max_steps
         observation = self._get_obs()
         info = self._get_info()
@@ -102,20 +106,19 @@ class Mmx4Env(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def close(self):
-        self.server.close()
-        close_emulators(self.handles)
+        self.connection.close()
 
     @staticmethod
     def _scaler(value, value_min, value_max, scale_min=-1, scale_max=1):
         value_std = (value - value_min) / (value_max - value_min)
         return value_std * (scale_max - scale_min) + scale_min
 
-    def _init_game(self, n_connections):
-        self.server = Server(n_connections)
-        for _ in range(n_connections):
-            start_emulator()
-            self.server.accept_connection()
-        # self.handles = set_emulator_grid()
+    def _init_single_game(self):
+        server = Server(n_connections=1)
+        start_emulator()
+        server.accept_connection()
+
+        self.connection = server.connections[0]
 
     def _msg_to_observation(self, data):
         data = data.copy()
