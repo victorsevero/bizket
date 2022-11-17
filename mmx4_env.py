@@ -30,7 +30,7 @@ class Mmx4Env(gym.Env):
         )
 
         self.action_space = spaces.Discrete(5)
-        self._action_to_button = {
+        self._action_to_button = {  # TODO: maybe add `do nothing` action?
             0: "left",
             1: "right",
             2: "cross",

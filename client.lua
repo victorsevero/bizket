@@ -1,4 +1,6 @@
 HP_UNIT = 0x101
+PSX_WIDTH = 320
+PSX_HEIGHT = 240
 
 local get_player_hp = function()
     local hp = memory.read_u16_le(0x141924)
@@ -24,6 +26,14 @@ end
 
 local get_boss_y = function()
     return memory.read_u16_le(0x13BEDE)
+end
+
+local get_camera_x = function()
+    return memory.read_u16_le(0x1419BA)
+end
+
+local get_camera_y = function()
+    return memory.read_u16_le(0x1419BE)
 end
 
 local make_msg = function(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
@@ -75,11 +85,49 @@ local set_commands = function(commands)
     joypad.set(buttons, 1)
 end
 
+local ingame_pixel_to_screen = function(x, y)
+    x = SCREEN_WIDTH / PSX_WIDTH * x + BORDER_WIDTH
+    x = math.floor(x + 0.5)
+    y = SCREEN_HEIGHT / PSX_HEIGHT * y + BORDER_HEIGHT
+    y = math.floor(y + 0.5)
+
+    return x, y
+end
+
+local draw_player = function()
+    local x = get_player_x()
+    local y = get_player_y()
+
+    local cam_x = get_camera_x()
+    local cam_y = get_camera_y()
+
+    local px_x, px_y = ingame_pixel_to_screen(x - cam_x, y - cam_y)
+    gui.drawLine(0, 0, px_x, px_y)
+end
+
+local draw_boss = function()
+    local x = get_boss_x()
+    local y = get_boss_y()
+
+    local cam_x = get_camera_x()
+    local cam_y = get_camera_y()
+
+    local px_x, px_y = ingame_pixel_to_screen(x - cam_x, y - cam_y)
+    gui.drawLine(0, 0, px_x, px_y)
+end
+
 comm.socketServerSetTimeout(10000)
+gui.use_surface("client")
 client.invisibleemulation(false)
+BORDER_WIDTH = 84
+BORDER_HEIGHT = 0
+SCREEN_WIDTH = client.bufferwidth() - 2 * BORDER_WIDTH
+SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
 
 while true do
     assert(memory.usememorydomain("MainRAM"))
+    -- draw_player()
+    -- draw_boss()
     local msg = get_msg()
     comm.socketServerSend(msg)
     local response = comm.socketServerResponse()
@@ -88,7 +136,7 @@ while true do
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        for _ = 1, 15 do
+        for _ = 1, 10 do
             set_commands(response)
             emu.frameadvance()
         end
