@@ -175,6 +175,7 @@ cython_debug/
 /fitness.png
 /model.pkl
 /nn.pkl
+*.zip
 
 # game ROMs
 /roms/
