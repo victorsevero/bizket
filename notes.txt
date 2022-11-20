@@ -1,0 +1,41 @@
+cat /etc/resolv.conf | grep nameserver | awk '{ print $2 }'
+
+console.log( joypad.getimmediate() )
+
+minX: 115D
+maxX: 12EF
+minY: 008D
+minY(jump): 0175
+maxY: 01BA
+
+PROJETIL:
+11E6
+
+--luascript="\\wsl.localhost\Ubuntu\home\sevs\bizket"
+
+/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe
+
+PSX-VRAM: width x height = 704x512
+4bpp
+
+CLUTs:
+X: 0;480
+Boss: 16;482
+
+BizHawk Hex Editor:
+CLUTs on 0xFxxxx VRAM addresses
+but each palette corresponds to 16 colors of 16bits each
+
+for MMX4, that means
+0xF0000 to 0xF01FF (first palette is 0xF0000 to 0xF001F)
+0xF0800 to 0xF09FF
+...
+0xF3800 to 0xF39FF
+
+boss: 33, 34, 35, 37
+background: 65, 66, 67, 69, 72, 74, 75, 76, 79
+ground: 83, 84
+foreground: 104, 109, 114, 119
+projectiles: 36
+
+possible delay of 1 CLUT

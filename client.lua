@@ -3,37 +3,37 @@ PSX_WIDTH = 320
 PSX_HEIGHT = 240
 
 local get_player_hp = function()
-    local hp = memory.read_u16_le(0x141924)
+    local hp = mainmemory.read_u16_le(0x141924)
     return hp / HP_UNIT
 end
 
 local get_player_x = function()
-    return memory.read_u16_le(0x1418D2)
+    return mainmemory.read_u16_le(0x1418D2)
 end
 
 local get_player_y = function()
-    return memory.read_u16_le(0x1418D6)
+    return mainmemory.read_u16_le(0x1418D6)
 end
 
 local get_boss_hp = function()
-    local hp = memory.read_u16_le(0x13BF2C)
+    local hp = mainmemory.read_u16_le(0x13BF2C)
     return hp / HP_UNIT
 end
 
 local get_boss_x = function()
-    return memory.read_u16_le(0x13BEDA)
+    return mainmemory.read_u16_le(0x13BEDA)
 end
 
 local get_boss_y = function()
-    return memory.read_u16_le(0x13BEDE)
+    return mainmemory.read_u16_le(0x13BEDE)
 end
 
 local get_camera_x = function()
-    return memory.read_u16_le(0x1419BA)
+    return mainmemory.read_u16_le(0x1419BA)
 end
 
 local get_camera_y = function()
-    return memory.read_u16_le(0x1419BE)
+    return mainmemory.read_u16_le(0x1419BE)
 end
 
 local make_msg = function(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
@@ -116,6 +116,27 @@ local draw_boss = function()
     gui.drawLine(0, 0, px_x, px_y)
 end
 
+local set_palette = function(palette_idx, color)
+    local new_color
+    if color == "white" then
+        new_color = 0x7FFF
+    elseif color == "transparent" then
+        new_color = 0x0000
+    else
+        new_color = 0x8000
+    end
+
+    local x_offset = palette_idx % 16
+    local y_offset = math.floor(palette_idx / 16)
+    local first_address = 0xF0000 + 0x20 * x_offset + 0x800 * y_offset
+
+    for i = 1, 15 do
+        local color_address = first_address + i * 2 -- 2 bytes each
+        memory.write_u16_le(color_address, new_color, "GPURAM")
+    end
+end
+
+
 comm.socketServerSetTimeout(10000)
 gui.use_surface("client")
 client.invisibleemulation(false)
@@ -124,21 +145,68 @@ BORDER_HEIGHT = 0
 SCREEN_WIDTH = client.bufferwidth() - 2 * BORDER_WIDTH
 SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
 
+local i = 0
+
 while true do
-    assert(memory.usememorydomain("MainRAM"))
+    mainmemory.write_u8(0x1721DF, 0)
+    -- character
+    set_palette(0, "white") -- sprite
+    set_palette(2, "white") -- buster
+    set_palette(3, "white") -- mega buster
+    set_palette(5, "transparent") -- dash smoke
+    set_palette(13, "transparent") -- dash
+    set_palette(14, "transparent") -- dash
+    set_palette(15, "transparent") -- dash
+
+    -- boss
+    set_palette(32, "white")
+    set_palette(33, "white")
+    set_palette(34, "white")
+    set_palette(36, "white")
+
+    -- projectiles
+    set_palette(35, "white")
+
+    -- foreground
+    set_palette(103, "transparent")
+    set_palette(106, "transparent")
+
+    -- ground
+    set_palette(82, "transparent")
+    set_palette(83, "transparent")
+    set_palette(111, "transparent")
+    set_palette(115, "transparent")
+    set_palette(116, "transparent")
+
+    --background
+    for j = 64, 79 do -- 79
+        set_palette(j, "transparent")
+    end
+    set_palette(119, "transparent")
+
+    emu.frameadvance()
+    set_palette(i, "transparent")
+    print(i - 2)
+    if i < 16 * 8 - 1 then
+        i = i + 1
+    else
+        i = 0
+    end
+
     -- draw_player()
     -- draw_boss()
-    local msg = get_msg()
-    comm.socketServerSend(msg)
-    local response = comm.socketServerResponse()
-    if response == "load" then
-        savestate.loadslot(3)
-    elseif response == "close" then
-        client.exit()
-    elseif response ~= "ok" then
-        for _ = 1, 10 do
-            set_commands(response)
-            emu.frameadvance()
-        end
-    end
+
+    -- local msg = get_msg()
+    -- comm.socketServerSend(msg)
+    -- local response = comm.socketServerResponse()
+    -- if response == "load" then
+    --     savestate.loadslot(3)
+    -- elseif response == "close" then
+    --     client.exit()
+    -- elseif response ~= "ok" then
+    --     for _ = 1, 10 do
+    --         set_commands(response)
+    --         emu.frameadvance()
+    --     end
+    -- end
 end

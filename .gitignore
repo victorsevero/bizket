@@ -163,8 +163,9 @@ cython_debug/
 .vscode/
 
 # local garbage
-/notes.txt
 /bizhawk_config.ini
+/*.png
+/*.bmp
 
 # scripts for quick test purposes
 /test.lua
