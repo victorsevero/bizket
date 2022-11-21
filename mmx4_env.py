@@ -30,12 +30,13 @@ class Mmx4Env(gym.Env):
         )
 
         self.action_space = spaces.Discrete(5)
-        self._action_to_button = {  # TODO: maybe add `do nothing` action?
-            0: "left",
-            1: "right",
-            2: "cross",
-            3: "circle",
+        self._action_to_button = {
+            0: "nothing",
+            1: "left",
+            2: "right",
+            3: "cross",
             4: "square",
+            # 5: "circle",
         }
 
         if connection is None:
@@ -43,8 +44,8 @@ class Mmx4Env(gym.Env):
         else:
             self.connection = connection
 
-        # 60 frames = 1 second, but it always skips 4 frames on each iteration
-        self.max_steps = (60 // 15) * time
+        # 60 frames = 1 second, but it always skips 10 frames on each iteration
+        self.max_steps = (60 // 10) * time
         self.frame = 0
 
     def _get_obs(self):

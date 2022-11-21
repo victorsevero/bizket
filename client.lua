@@ -1,6 +1,11 @@
 HP_UNIT = 0x101
 PSX_WIDTH = 320
 PSX_HEIGHT = 240
+BORDER_WIDTH = 84
+BORDER_HEIGHT = 0
+SCREEN_WIDTH = client.bufferwidth() - 2 * BORDER_WIDTH
+SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
+
 
 local get_player_hp = function()
     local hp = mainmemory.read_u16_le(0x141924)
@@ -137,20 +142,10 @@ local set_palette = function(palette_idx, color)
 end
 
 
-comm.socketServerSetTimeout(10000)
-gui.use_surface("client")
-client.invisibleemulation(false)
-BORDER_WIDTH = 84
-BORDER_HEIGHT = 0
-SCREEN_WIDTH = client.bufferwidth() - 2 * BORDER_WIDTH
-SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
-
-local i = 0
-
-while true do
-    mainmemory.write_u8(0x1721DF, 0)
+local set_all_palettes = function()
     -- character
     set_palette(0, "white") -- sprite
+    set_palette(1, "white") -- saber
     set_palette(2, "white") -- buster
     set_palette(3, "white") -- mega buster
     set_palette(5, "transparent") -- dash smoke
@@ -159,13 +154,14 @@ while true do
     set_palette(15, "transparent") -- dash
 
     -- boss
+    set_palette(6, "transparent") -- stomp smoke
+    set_palette(24, "transparent") -- projectile hits ground
+    set_palette(16, "white") -- damage taken
     set_palette(32, "white")
     set_palette(33, "white")
     set_palette(34, "white")
+    set_palette(35, "white") -- projectiles
     set_palette(36, "white")
-
-    -- projectiles
-    set_palette(35, "white")
 
     -- foreground
     set_palette(103, "transparent")
@@ -183,8 +179,21 @@ while true do
         set_palette(j, "transparent")
     end
     set_palette(119, "transparent")
+end
 
+
+local frameadvance = function()
+    -- set_all_palettes()
     emu.frameadvance()
+end
+
+
+local disable_hud = function()
+    mainmemory.write_u8(0x1721DF, 0)
+end
+
+
+local palette_search_cycle = function()
     set_palette(i, "transparent")
     print(i - 2)
     if i < 16 * 8 - 1 then
@@ -192,21 +201,29 @@ while true do
     else
         i = 0
     end
+end
 
-    -- draw_player()
-    -- draw_boss()
 
-    -- local msg = get_msg()
-    -- comm.socketServerSend(msg)
-    -- local response = comm.socketServerResponse()
-    -- if response == "load" then
-    --     savestate.loadslot(3)
-    -- elseif response == "close" then
-    --     client.exit()
-    -- elseif response ~= "ok" then
-    --     for _ = 1, 10 do
-    --         set_commands(response)
-    --         emu.frameadvance()
-    --     end
-    -- end
+comm.socketServerSetTimeout(10000)
+client.invisibleemulation(false)
+-- gui.use_surface("client")
+-- local i = 0
+
+
+disable_hud()
+while true do
+    local msg = get_msg()
+    comm.socketServerSend(msg)
+    local response = comm.socketServerResponse()
+    if response == "load" then
+        savestate.loadslot(3)
+        -- disable_hud()
+    elseif response == "close" then
+        client.exit()
+    elseif response ~= "ok" then
+        for _ = 1, 10 do
+            set_commands(response)
+            frameadvance()
+        end
+    end
 end

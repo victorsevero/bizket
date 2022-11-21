@@ -49,6 +49,17 @@ class Server:
 
 
 class Connection:
+    ACTIONS_MAP = {
+        "nothing": "n",
+        "left": "l",
+        "right": "r",
+        "cross": "x",
+        "square": "s",
+        "circle": "o",
+        "load": "load",
+        "close": "close",
+    }
+
     def __init__(self, connection):
         self._connection = connection
         self.frame = 0
@@ -78,7 +89,8 @@ class Connection:
         return data_dict
 
     def send_msg(self, msg: str):
-        self._connection.sendall(self._encode_msg(msg))
+        encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])
+        self._connection.sendall(encoded_msg)
         self.frame += 1
 
     @staticmethod
@@ -90,14 +102,14 @@ class Connection:
 
     def square_spam_strat(self):
         if self.frame % 21 == 0:
-            msg = "s"
+            msg = "square"
         else:
             msg = "ok"
         self.send_msg(msg)
 
     def x_spam_strat(self):
         if self.frame % 21 == 0:
-            msg = "x"
+            msg = "cross"
         else:
             msg = "ok"
         self.send_msg(msg)
