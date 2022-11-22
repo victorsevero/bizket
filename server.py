@@ -12,6 +12,12 @@ class Server:
         self._n_connections = n_connections
         self.connections: List[Connection] = []
 
+    def __getitem__(self, i):
+        return self.connections[i]
+
+    def __len__(self):
+        return len(self.connections)
+
     def _bind_server(self, n_connections):
         print(f"Starting server on {self.ip}:{self.port}")
         self._socket.bind((self.ip, self.port))

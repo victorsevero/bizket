@@ -177,6 +177,7 @@ cython_debug/
 /model.pkl
 /nn.pkl
 *.zip
+/tmp
 
 # game ROMs
 /roms/

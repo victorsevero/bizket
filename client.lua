@@ -210,7 +210,7 @@ client.invisibleemulation(false)
 -- local i = 0
 
 
-disable_hud()
+-- disable_hud()
 while true do
     local msg = get_msg()
     comm.socketServerSend(msg)

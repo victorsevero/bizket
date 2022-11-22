@@ -4,14 +4,23 @@ from gym import spaces
 from stable_baselines3.common.env_checker import check_env
 
 from server import Server
-from emulator_grid import start_emulator
+from emulator_grid import start_emulator, set_emulator_grid
+
+
+n_processes = 2
+server = Server(n_connections=n_processes)
+for _ in range(n_processes):
+    start_emulator()
+    server.accept_connection()
+handles = set_emulator_grid()
 
 
 class Mmx4Env(gym.Env):
     CENTER_X = (0x12EF + 0x115D) / 2
     CENTER_Y = (0x01BA + 0x008D) / 2
 
-    def __init__(self, connection=None, time=60):
+    def __init__(self, connection_idx, time=60):
+        global server
         self.observation_space = spaces.Dict(
             {
                 "player_position": spaces.Box(
@@ -39,10 +48,7 @@ class Mmx4Env(gym.Env):
             # 5: "circle",
         }
 
-        if connection is None:
-            self._init_single_game()
-        else:
-            self.connection = connection
+        self.connection = server[connection_idx]
 
         # 60 frames = 1 second, but it always skips 10 frames on each iteration
         self.max_steps = (60 // 10) * time
@@ -114,12 +120,12 @@ class Mmx4Env(gym.Env):
         value_std = (value - value_min) / (value_max - value_min)
         return value_std * (scale_max - scale_min) + scale_min
 
-    def _init_single_game(self):
-        server = Server(n_connections=1)
-        start_emulator()
-        server.accept_connection()
+    # def _init_single_game(self):
+    #     server = Server(n_connections=1)
+    #     start_emulator()
+    #     server.accept_connection()
 
-        self.connection = server.connections[0]
+    #     self.connection = server.connections[0]
 
     def _msg_to_observation(self, data):
         data = data.copy()
