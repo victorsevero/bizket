@@ -92,4 +92,4 @@ def full_emulator_setup(n_connections):
 
 
 if __name__ == "__main__":
-    set_emulator_grid()
+    full_emulator_setup(2)

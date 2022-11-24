@@ -7,9 +7,9 @@ from server import Server
 from emulator_grid import start_emulator, set_emulator_grid
 
 
-n_processes = 2
-server = Server(n_connections=n_processes)
-for _ in range(n_processes):
+N_PROCESSES = 1
+server = Server(n_connections=N_PROCESSES)
+for _ in range(N_PROCESSES):
     start_emulator()
     server.accept_connection()
 handles = set_emulator_grid()

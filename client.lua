@@ -204,7 +204,7 @@ local palette_search_cycle = function()
 end
 
 
-comm.socketServerSetTimeout(10000)
+comm.socketServerSetTimeout(0)
 client.invisibleemulation(false)
 -- gui.use_surface("client")
 -- local i = 0
