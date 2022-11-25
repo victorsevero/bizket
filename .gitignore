@@ -163,8 +163,10 @@ cython_debug/
 .vscode/
 
 # local garbage
-/notes.txt
 /bizhawk_config.ini
+/*.png
+/*.bmp
+notes.txt
 
 # scripts for quick test purposes
 /test.lua
@@ -175,6 +177,8 @@ cython_debug/
 /fitness.png
 /model.pkl
 /nn.pkl
+*.zip
+/tmp
 
 # game ROMs
 /roms/

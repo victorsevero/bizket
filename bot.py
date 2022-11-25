@@ -204,10 +204,10 @@ def list_dirs(path="results/"):
 
 
 if __name__ == "__main__":
-    n_processes = 8
+    n_processes = 1
 
     gann_kwargs = {
-        "num_solutions": n_processes,
+        "num_solutions": 8,
         "num_neurons_input": 4,
         "num_neurons_hidden_layers": [5],
         "num_neurons_output": 5,
@@ -241,14 +241,14 @@ if __name__ == "__main__":
         server.accept_connection()
     handles = set_emulator_grid()
 
-    best_solution = None
-    best_fitness = -1
+    # best_solution = None
+    # best_fitness = -1
 
-    p_bar = trange(
-        model_kwargs["num_generations"],
-        desc="Generation",
-        position=0,
-    )
+    # p_bar = trange(
+    #     model_kwargs["num_generations"],
+    #     desc="Generation",
+    #     position=0,
+    # )
 
     # nn = load_model()
     # population_networks = []
@@ -256,8 +256,7 @@ if __name__ == "__main__":
     #     population_networks.append(deepcopy(nn))
 
     # gann.population_networks = population_networks
-    bot()
 
-    # server = Server(n_connections=1)
-    # server.accept_connection()
-    # run_saved_model()
+    # bot()
+
+    run_saved_model()

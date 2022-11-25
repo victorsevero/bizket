@@ -12,6 +12,12 @@ class Server:
         self._n_connections = n_connections
         self.connections: List[Connection] = []
 
+    def __getitem__(self, i):
+        return self.connections[i]
+
+    def __len__(self):
+        return len(self.connections)
+
     def _bind_server(self, n_connections):
         print(f"Starting server on {self.ip}:{self.port}")
         self._socket.bind((self.ip, self.port))
@@ -40,8 +46,8 @@ class Server:
     def x_spam_strat(self, i):
         self.connections[i].x_spam_strat()
 
-    def load_state(self, i):
-        self.connections[i].load_state()
+    def load_state(self, i, need_msg: bool = True):
+        self.connections[i].load_state(need_msg)
 
     def close(self):
         for connection in self.connections:
@@ -49,6 +55,17 @@ class Server:
 
 
 class Connection:
+    ACTIONS_MAP = {
+        "nothing": "n",
+        "left": "l",
+        "right": "r",
+        "cross": "x",
+        "square": "s",
+        "circle": "o",
+        "load": "load",
+        "close": "close",
+    }
+
     def __init__(self, connection):
         self._connection = connection
         self.frame = 0
@@ -78,7 +95,8 @@ class Connection:
         return data_dict
 
     def send_msg(self, msg: str):
-        self._connection.sendall(self._encode_msg(msg))
+        encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])
+        self._connection.sendall(encoded_msg)
         self.frame += 1
 
     @staticmethod
@@ -90,25 +108,26 @@ class Connection:
 
     def square_spam_strat(self):
         if self.frame % 21 == 0:
-            msg = "s"
+            msg = "square"
         else:
             msg = "ok"
         self.send_msg(msg)
 
     def x_spam_strat(self):
         if self.frame % 21 == 0:
-            msg = "x"
+            msg = "cross"
         else:
             msg = "ok"
         self.send_msg(msg)
 
     def close(self):
-        self.get_msg()
+        # self.get_msg()
         self.send_msg("close")
         self._connection.close()
 
-    def load_state(self):
-        self.get_msg()
+    def load_state(self, need_msg: bool = True):
+        if need_msg:
+            self.get_msg()
         self.send_msg("load")
         self.frame = 0
 
