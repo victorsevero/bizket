@@ -4,10 +4,10 @@ from gym import spaces
 from stable_baselines3.common.env_checker import check_env
 
 from server import Server
-from emulator_grid import start_emulator, set_emulator_grid
+from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
-N_PROCESSES = 1
+N_PROCESSES = 2
 server = Server(n_connections=N_PROCESSES)
 for _ in range(N_PROCESSES):
     start_emulator()
@@ -19,7 +19,7 @@ class Mmx4Env(gym.Env):
     CENTER_X = (0x12EF + 0x115D) / 2
     CENTER_Y = (0x01BA + 0x008D) / 2
 
-    def __init__(self, connection_idx, time=60):
+    def __init__(self, connection_idx, time=600):
         global server
         self.observation_space = spaces.Dict(
             {
@@ -53,6 +53,7 @@ class Mmx4Env(gym.Env):
         # 60 frames = 1 second, but it always skips 10 frames on each iteration
         self.max_steps = (60 // 10) * time
         self.frame = 0
+        self.first_load = True
 
     def _get_obs(self):
         return {
@@ -65,7 +66,9 @@ class Mmx4Env(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.frame = 0
-        self.connection.load_state()
+        self.connection.load_state(self.first_load)
+        if self.first_load:
+            self.first_load = False
 
         data = self.connection.get_msg()
         (
@@ -76,9 +79,8 @@ class Mmx4Env(gym.Env):
         ) = self._msg_to_observation(data)
 
         observation = self._get_obs()
-        info = self._get_info()
 
-        return observation, info
+        return observation
 
     def step(self, action):
         past_player_hp = self._player_hp
@@ -94,7 +96,7 @@ class Mmx4Env(gym.Env):
         ) = self._msg_to_observation(data)
         self.frame += 1
 
-        terminated = (not self._player_hp) or (not self._boss_hp)
+        terminated = not (self._player_hp and self._boss_hp)
         boss_weight = 1
         # weight * boss taken damage - player taken damage
         reward = boss_weight * (past_boss_hp - self._boss_hp) - (
@@ -107,13 +109,14 @@ class Mmx4Env(gym.Env):
             value_max=boss_weight * 5,  # X charged buster or Zero saber
         )
         truncated = self.frame >= self.max_steps
+        done = terminated or truncated
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, terminated, truncated, info
+        return observation, reward, done, info
 
     def close(self):
-        self.connection.close()
+        ...
 
     @staticmethod
     def _scaler(value, value_min, value_max, scale_min=-1, scale_max=1):
@@ -168,5 +171,7 @@ class Mmx4Env(gym.Env):
 
 
 if __name__ == "__main__":
-    env = Mmx4Env()
+    env = Mmx4Env(0)
     check_env(env)
+    server.close()
+    close_emulators(handles)

@@ -46,8 +46,8 @@ class Server:
     def x_spam_strat(self, i):
         self.connections[i].x_spam_strat()
 
-    def load_state(self, i):
-        self.connections[i].load_state()
+    def load_state(self, i, need_msg: bool = True):
+        self.connections[i].load_state(need_msg)
 
     def close(self):
         for connection in self.connections:
@@ -121,12 +121,13 @@ class Connection:
         self.send_msg(msg)
 
     def close(self):
-        self.get_msg()
+        # self.get_msg()
         self.send_msg("close")
         self._connection.close()
 
-    def load_state(self):
-        self.get_msg()
+    def load_state(self, need_msg: bool = True):
+        if need_msg:
+            self.get_msg()
         self.send_msg("load")
         self.frame = 0
 

@@ -166,6 +166,7 @@ cython_debug/
 /bizhawk_config.ini
 /*.png
 /*.bmp
+notes.txt
 
 # scripts for quick test purposes
 /test.lua
