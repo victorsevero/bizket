@@ -182,3 +182,6 @@ notes.txt
 
 # game ROMs
 /roms/
+
+# Tensorboard logs
+/*_logs/

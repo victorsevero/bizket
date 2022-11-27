@@ -1,7 +1,5 @@
 import subprocess
 
-import pygetwindow as gw
-
 
 SCREEN_X = 2560
 SIZE_X = SCREEN_X // 4
@@ -10,21 +8,17 @@ SIZE_Y = 3 * SIZE_X // 4
 
 def start_emulator():
     subprocess.Popen(
-        "/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe"
-        # + " --config=python.ini"
-        + " --load-slot=3"
-        # + " --lua=client.lua"
-        + " --socket_ip=127.0.1" + " --socket_port=6969",
-        # + ' "roms/Mega Man X4 (USA).bin"',
-        shell=True,
-        stdin=None,
-        stdout=None,
-        stderr=None,
+        [
+            "/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe",
+            "--load-slot=3",
+            "--socket_ip=127.0.1",
+            "--socket_port=6969",
+        ]
     )
 
 
 def close_emulators():
-    subprocess.run(
+    subprocess.Popen(
         ["/mnt/c/Windows/System32/taskkill.exe", "/IM", "EmuHawk.exe", "/F"],
     )
 
@@ -36,6 +30,8 @@ def set_emulator_grid():
 
 
 def windows_grid():
+    import pygetwindow as gw
+
     windows = gw.getWindowsWithTitle(
         "Mega Man X4 (USA) [PlayStation] - BizHawk"
     )

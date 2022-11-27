@@ -8,7 +8,7 @@ from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
 try:
-    N_PROCESSES = 1
+    N_PROCESSES = 8
     server = Server(n_connections=N_PROCESSES)
     for i in range(N_PROCESSES):
         start_emulator()
@@ -16,10 +16,11 @@ try:
         server[i].get_game_data()
     set_emulator_grid()
     for i in range(N_PROCESSES):
-        for _ in range(20):
+        for _ in range(2):
             server[i].get_game_data()
 except:
     close_emulators()
+    exit()
 
 
 class Mmx4Env(gym.Env):
