@@ -1,9 +1,5 @@
 import socket
-from io import BytesIO
 from typing import Dict, List
-
-import numpy as np
-from PIL import Image
 
 
 class Server:
@@ -69,11 +65,10 @@ class Connection:
         "circle": "o",
         "load": "load",
         "close": "close",
-        "ok": "ok",
     }
 
     def __init__(self, connection):
-        self._connection: socket = connection
+        self._connection = connection
         self.frame = 0
 
     def get_game_data(self):
@@ -83,34 +78,22 @@ class Connection:
         return msg
 
     def get_msg(self):
-        size = bytearray()
-        while not size.endswith(b" "):
-            size += self._connection.recv(1)
-        size = int(size[:-1].decode())
-
-        data = self._connection.recv(size)
-        data_dict = self._decode_msg(data)
-
-        data = bytearray()
-        while not data.endswith(b"IEND\xaeB`\x82"):
-            data += self._connection.recv(4096)
-        screen_matrix = self._decode_img(bytes(data))
-
-        return screen_matrix, data_dict["player_hp"], data_dict["boss_hp"]
+        data = self._connection.recv(1024)
+        if data:
+            return self._decode_msg(data)
 
     @staticmethod
     def _decode_msg(data: bytes) -> Dict[str, int]:
-        data_list = data.decode().split(" ")
+        data_list = data.decode().split(" ")[1:]
         data_dict = {x[:2]: int(x[2:]) for x in data_list}
         data_dict["player_hp"] = data_dict.pop("ph")
+        data_dict["player_x"] = data_dict.pop("px")
+        data_dict["player_y"] = data_dict.pop("py")
         data_dict["boss_hp"] = data_dict.pop("bh")
+        data_dict["boss_x"] = data_dict.pop("bx")
+        data_dict["boss_y"] = data_dict.pop("by")
 
         return data_dict
-
-    @staticmethod
-    def _decode_img(data: bytes):
-        im = Image.open(BytesIO(data))
-        return np.array(im.convert("RGB"))[:, 18:-12]
 
     def send_msg(self, msg: str):
         encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])

@@ -1,4 +1,3 @@
-HP_UNIT = 0x101
 PSX_WIDTH = 320
 PSX_HEIGHT = 240
 BORDER_WIDTH = 84
@@ -8,8 +7,7 @@ SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
 
 
 local get_player_hp = function()
-    local hp = mainmemory.read_u16_le(0x141924)
-    return hp / HP_UNIT
+    return bit.clear(mainmemory.read_u8(0x141924), 7)
 end
 
 local get_player_x = function()
@@ -21,8 +19,7 @@ local get_player_y = function()
 end
 
 local get_boss_hp = function()
-    local hp = mainmemory.read_u16_le(0x13BF2C)
-    return hp / HP_UNIT
+    return bit.clear(mainmemory.read_u8(0x13BF2C), 7)
 end
 
 local get_boss_x = function()
@@ -41,26 +38,18 @@ local get_camera_y = function()
     return mainmemory.read_u16_le(0x1419BE)
 end
 
-local make_msg = function(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
+local make_msg = function(player_hp, boss_hp)
     local msg = ""
     msg = msg .. "ph" .. string.format("%02d", player_hp)
-    msg = msg .. " px" .. string.format("%02d", player_x)
-    msg = msg .. " py" .. string.format("%02d", player_y)
     msg = msg .. " bh" .. string.format("%02d", boss_hp)
-    msg = msg .. " bx" .. string.format("%02d", boss_x)
-    msg = msg .. " by" .. string.format("%02d", boss_y)
 
     return msg
 end
 
 local get_msg = function()
     local player_hp = get_player_hp()
-    local player_x = get_player_x()
-    local player_y = get_player_y()
     local boss_hp = get_boss_hp()
-    local boss_x = get_boss_x()
-    local boss_y = get_boss_y()
-    local msg = make_msg(player_hp, player_x, player_y, boss_hp, boss_x, boss_y)
+    local msg = make_msg(player_hp, boss_hp)
 
     return msg
 end
@@ -210,20 +199,22 @@ client.invisibleemulation(false)
 -- local i = 0
 
 
--- disable_hud()
+disable_hud()
+frameadvance()
+frameadvance()
 while true do
     local msg = get_msg()
     comm.socketServerSend(msg)
-    local response = comm.socketServerResponse()
+    local response = comm.socketServerScreenShotResponse()
     if response == "load" then
         savestate.loadslot(3)
-        -- disable_hud()
+        disable_hud()
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        for _ = 1, 10 do
-            set_commands(response)
-            frameadvance()
-        end
+        -- for _ = 1, 10 do
+        set_commands(response)
+        frameadvance()
+        -- end
     end
 end

@@ -7,7 +7,7 @@ SCREEN_X = 2560
 
 
 def start_emulator():
-    subprocess.Popen(
+    subproc = subprocess.Popen(
         "/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe"
         # + " --config=python.ini"
         + " --load-slot=3"
@@ -92,4 +92,4 @@ def full_emulator_setup(n_connections):
 
 
 if __name__ == "__main__":
-    full_emulator_setup(2)
+    full_emulator_setup(1)

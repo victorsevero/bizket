@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 pygad = "^2.18.1"
-stable-baselines3 = "^1.6.2"
+stable-baselines3 = {git = "https://github.com/carlosluis/stable-baselines3", rev = "fix_tests"}
 tqdm = "^4.64.1"
 rich = "^12.6.0"
 
