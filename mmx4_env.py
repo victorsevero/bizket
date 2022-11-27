@@ -7,14 +7,19 @@ from server import Server
 from emulator_grid import start_emulator, set_emulator_grid, close_emulators
 
 
-N_PROCESSES = 1
-server = Server(n_connections=N_PROCESSES)
-for i in range(N_PROCESSES):
-    start_emulator()
-    server.accept_connection()
-    server[i].get_game_data()
-    server[i].get_game_data()
-handles = set_emulator_grid()
+try:
+    N_PROCESSES = 1
+    server = Server(n_connections=N_PROCESSES)
+    for i in range(N_PROCESSES):
+        start_emulator()
+        server.accept_connection()
+        server[i].get_game_data()
+    set_emulator_grid()
+    for i in range(N_PROCESSES):
+        for _ in range(20):
+            server[i].get_game_data()
+except:
+    close_emulators()
 
 
 class Mmx4Env(gym.Env):
@@ -81,9 +86,6 @@ class Mmx4Env(gym.Env):
             self._boss_hp,
         ) = self.connection.get_msg()
 
-        # if self._player_hp < 0:
-        #     self._player_hp =
-
         self.frame += 1
 
         terminated = not (self._player_hp and self._boss_hp)
@@ -98,7 +100,7 @@ class Mmx4Env(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, done, info
+        return observation, reward, terminated, truncated, info
 
     def close(self):
         ...
@@ -110,4 +112,4 @@ if __name__ == "__main__":
         check_env(env)
     finally:
         server.close()
-        close_emulators(handles)
+        close_emulators()

@@ -1,13 +1,15 @@
 import subprocess
 
-from server import Server
+import pygetwindow as gw
 
 
 SCREEN_X = 2560
+SIZE_X = SCREEN_X // 4
+SIZE_Y = 3 * SIZE_X // 4
 
 
 def start_emulator():
-    subproc = subprocess.Popen(
+    subprocess.Popen(
         "/mnt/c/Users/victo/Documents/BizHawk/EmuHawk.exe"
         # + " --config=python.ini"
         + " --load-slot=3"
@@ -21,75 +23,30 @@ def start_emulator():
     )
 
 
-def get_handles():
-    proc = subprocess.Popen(
-        [
-            "/mnt/c/Users/victo/Documents/BizHawk/cmdow.exe",
-            "Mega Man X4 (USA) [Playstation] - BizHawk",
-        ],
-        stdout=subprocess.PIPE,
-    )
-
-    handles = []
-    for line in proc.stdout:
-        if line[:8] != b"Handle  ":
-            handles.append(line[:8].decode())
-
-    return handles
-
-
-def close_emulators(handles):
-    for handle in handles:
-        subprocess.Popen(
-            [
-                "/mnt/c/Users/victo/Documents/BizHawk/cmdow.exe",
-                handle,
-                "/end",
-            ],
-            stdout=subprocess.PIPE,
-        )
-
-
-def move_window(handle, position):
-    size_x = SCREEN_X // 4
-    size_y = 3 * size_x // 4
-
-    x = (position % 4) * size_x
-    y = (position // 4) * size_y
-
-    subprocess.Popen(
-        [
-            "/mnt/c/Users/victo/Documents/BizHawk/cmdow.exe",
-            handle,
-            "/res",
-            "/mov",
-            str(x),
-            str(y),
-            "/siz",
-            str(size_x),
-            str(size_y),
-        ],
-        stdout=subprocess.PIPE,
+def close_emulators():
+    subprocess.run(
+        ["/mnt/c/Windows/System32/taskkill.exe", "/IM", "EmuHawk.exe", "/F"],
     )
 
 
 def set_emulator_grid():
-    handles = get_handles()
-    for i, handle in enumerate(handles):
-        move_window(handle, i)
-
-    return handles
+    subprocess.Popen(
+        ["/mnt/c/Program Files/Python310/python.exe", "emulator_grid.py"]
+    )
 
 
-def full_emulator_setup(n_connections):
-    server = Server(n_connections=n_connections)
-    for _ in range(n_connections):
-        start_emulator()
-        server.accept_connection()
-    handles = set_emulator_grid()
+def windows_grid():
+    windows = gw.getWindowsWithTitle(
+        "Mega Man X4 (USA) [PlayStation] - BizHawk"
+    )
+    for position, window in enumerate(windows):
+        x = (position % 4) * SIZE_X
+        y = (position // 4) * SIZE_Y
 
-    return server, handles
+        window.restore()
+        window.resizeTo(SIZE_X, SIZE_Y)
+        window.moveTo(x, y)
 
 
 if __name__ == "__main__":
-    full_emulator_setup(1)
+    windows_grid()

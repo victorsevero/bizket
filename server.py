@@ -78,7 +78,7 @@ class Connection:
 
     def get_game_data(self):
         msg = self.get_msg()
-        self.send_msg("ok")
+        self.send_msg("nothing")
 
         return msg
 
@@ -140,7 +140,7 @@ class Connection:
 
     def close(self):
         # self.get_msg()
-        self.send_msg("close")
+        # self.send_msg("close")
         self._connection.close()
 
     def load_state(self, need_msg: bool = True):
