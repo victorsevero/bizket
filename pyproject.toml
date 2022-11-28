@@ -7,14 +7,10 @@ license = "BSD 3-Clause"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
-pygad = "^2.18.1"
-stable-baselines3 = {git = "https://github.com/carlosluis/stable-baselines3", rev = "fix_tests"}
-tqdm = "^4.64.1"
-rich = "^12.6.0"
-pyautogui = "^0.9.53"
-tensorboard = "^2.11.0"
-torch-tb-profiler = "^0.4.0"
+python = ">=3.8,<3.9"
+torch = { url = "https://download.pytorch.org/whl/cu117/torch-1.13.0%2Bcu117-cp38-cp38-win_amd64.whl" }
+stable-baselines3 = { git = "https://github.com/carlosluis/stable-baselines3", rev = "fix_tests", extras = ["extra"] }
+pygetwindow = "^0.0.9"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^5.0.4"
