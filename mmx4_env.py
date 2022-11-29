@@ -4,23 +4,18 @@ from gym import spaces
 from stable_baselines3.common.env_checker import check_env
 
 from server import Server
-from emulator_grid import start_emulator, set_emulator_grid, close_emulators
+from emulator_grid import start_emulator, set_emulator_grid
 
 
-try:
-    N_PROCESSES = 8
-    server = Server(n_connections=N_PROCESSES)
-    for i in range(N_PROCESSES):
-        start_emulator()
-        server.accept_connection()
-        server[i].get_game_data()
-    set_emulator_grid()
-    for i in range(N_PROCESSES):
-        for _ in range(2):
-            server[i].get_game_data()
-except:
-    close_emulators()
-    exit()
+N_PROCESSES = 2
+server = Server(n_connections=N_PROCESSES)
+for i in range(N_PROCESSES):
+    start_emulator()
+    server.accept_connection()
+set_emulator_grid(N_PROCESSES)
+# for _ in range(100):
+#     for i in range(N_PROCESSES):
+#         server.get_game_data(i)
 
 
 class Mmx4Env(gym.Env):
@@ -47,8 +42,8 @@ class Mmx4Env(gym.Env):
         self.connection = server[connection_idx]
 
         # 60 frames = 1 second, but it always skips 10 frames on each iteration
-        # self.max_steps = (60 // 10) * time
-        self.max_steps = 60 * time
+        self.max_steps = (60 // 10) * time
+        # self.max_steps = 60 * time
         self.frame = 0
         self.first_load = True
 
@@ -97,7 +92,6 @@ class Mmx4Env(gym.Env):
         )
 
         truncated = self.frame >= self.max_steps
-        done = terminated or truncated
         observation = self._get_obs()
         info = self._get_info()
 
@@ -108,9 +102,5 @@ class Mmx4Env(gym.Env):
 
 
 if __name__ == "__main__":
-    try:
-        env = Mmx4Env(0)
-        check_env(env)
-    finally:
-        server.close()
-        close_emulators()
+    env = Mmx4Env(0)
+    check_env(env)
