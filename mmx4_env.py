@@ -4,18 +4,7 @@ from gym import spaces
 from stable_baselines3.common.env_checker import check_env
 
 from server import Server
-from emulator_grid import start_emulator, set_emulator_grid
-
-
-N_PROCESSES = 2
-server = Server(n_connections=N_PROCESSES)
-for i in range(N_PROCESSES):
-    start_emulator()
-    server.accept_connection()
-set_emulator_grid(N_PROCESSES)
-# for _ in range(100):
-#     for i in range(N_PROCESSES):
-#         server.get_game_data(i)
+from emulator_grid import start_emulator
 
 
 class Mmx4Env(gym.Env):
@@ -28,8 +17,7 @@ class Mmx4Env(gym.Env):
         # 5: "circle",
     }
 
-    def __init__(self, connection_idx, time=600):
-        global server
+    def __init__(self, port=6969, time=600):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
@@ -39,7 +27,10 @@ class Mmx4Env(gym.Env):
 
         self.action_space = spaces.Discrete(5)
 
-        self.connection = server[connection_idx]
+        server = Server(n_connections=1, port=port)
+        start_emulator(port)
+        server.accept_connection()
+        self.connection = server[0]
 
         # 60 frames = 1 second, but it always skips 10 frames on each iteration
         self.max_steps = (60 // 10) * time
@@ -102,5 +93,5 @@ class Mmx4Env(gym.Env):
 
 
 if __name__ == "__main__":
-    env = Mmx4Env(0)
+    env = Mmx4Env(port=6969)
     check_env(env)

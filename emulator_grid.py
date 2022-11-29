@@ -1,5 +1,6 @@
 import subprocess
 import threading
+
 import pygetwindow as gw
 
 
@@ -8,13 +9,13 @@ SIZE_X = SCREEN_X // 4
 SIZE_Y = 3 * SIZE_X // 4
 
 
-def start_emulator():
-    p = subprocess.Popen(
+def start_emulator(port=6969):
+    subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
             "--load-slot=3",
-            "--socket_ip=127.0.1",
-            "--socket_port=6969",
+            "--socket_ip=127.0.0.1",
+            f"--socket_port={port}",
         ]
     )
 
