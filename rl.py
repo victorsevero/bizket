@@ -14,7 +14,7 @@ def make_mmx4_env(port):
 
 
 if __name__ == "__main__":
-    N_PROCESSES = 8
+    N_PROCESSES = 1
     DEFAULT_PORT = 6969
     env_fns = [make_mmx4_env(DEFAULT_PORT + i) for i in range(N_PROCESSES)]
 
@@ -29,30 +29,9 @@ if __name__ == "__main__":
         seed=666,
     )
     model.learn(
-        total_timesteps=1000,
-        log_interval=1000,
-        tb_log_name=f"default_a2c",
+        total_timesteps=200_000,
+        log_interval=1000 / (5 * N_PROCESSES),
+        tb_log_name=f"default_a2c_10frames_gray",
         progress_bar=True,
     )
     model.save("a2c_mmx4")
-
-    # obs = env.reset()
-    # done = np.array(env.num_envs * [False])
-    # while not done.any():
-    #     env.step_async(
-    #         [env.action_space.sample() for _ in range(env.num_envs)]
-    #     )
-    #     obs, reward, done, info = env.step_wait()
-    # for i, instance_info in enumerate(info):
-    #     print(
-    #         f"{i}: Player={instance_info['player_hp']};"
-    #         + f" Boss={instance_info['boss_hp']}"
-    #     )
-
-    # env = DummyVecEnv([lambda: env])
-    # model = A2C.load("a2c_mmx4")
-    # obs = env.reset()
-    # done = False
-    # while not done:
-    #     action, _ = model.predict(obs)
-    #     _ = env.step(action)

@@ -21,16 +21,15 @@ class Mmx4Env(gym.Env):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
-            shape=(240, 320, 3),
+            shape=(128, 128, 1),
             dtype=np.uint8,
         )
 
         self.action_space = spaces.Discrete(5)
 
-        server = Server(n_connections=1, port=port)
+        self.server = Server(port=port)
         start_emulator(port)
-        server.accept_connection()
-        self.connection = server[0]
+        self.server.accept_connection()
 
         # 60 frames = 1 second, but it always skips 10 frames on each iteration
         self.max_steps = (60 // 10) * time
@@ -46,7 +45,7 @@ class Mmx4Env(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.frame = 0
-        self.connection.load_state(self.first_load)
+        self.server.load_state(self.first_load)
         if self.first_load:
             self.first_load = False
 
@@ -54,7 +53,7 @@ class Mmx4Env(gym.Env):
             self._screen_matrix,
             self._player_hp,
             self._boss_hp,
-        ) = self.connection.get_msg()
+        ) = self.server.get_msg()
 
         observation = self._get_obs()
         info = self._get_info()
@@ -65,13 +64,13 @@ class Mmx4Env(gym.Env):
         past_player_hp = self._player_hp
         past_boss_hp = self._boss_hp
 
-        self.connection.send_msg(self.ACTION_TO_BUTTON[action])
+        self.server.send_msg(self.ACTION_TO_BUTTON[action])
 
         (
             self._screen_matrix,
             self._player_hp,
             self._boss_hp,
-        ) = self.connection.get_msg()
+        ) = self.server.get_msg()
 
         self.frame += 1
 
