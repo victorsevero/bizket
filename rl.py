@@ -1,5 +1,10 @@
 from stable_baselines3 import A2C
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
+from stable_baselines3.common.vec_env import (
+    SubprocVecEnv,
+    VecTransposeImage,
+    VecFrameStack,
+    VecMonitor,
+)
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
@@ -13,13 +18,25 @@ def make_mmx4_env(port):
     return _init
 
 
-if __name__ == "__main__":
-    N_PROCESSES = 1
-    DEFAULT_PORT = 6969
-    env_fns = [make_mmx4_env(DEFAULT_PORT + i) for i in range(N_PROCESSES)]
+def env_setup(n_processes, default_port=6969):
+    env_fns = [make_mmx4_env(default_port + i) for i in range(n_processes)]
 
-    env = VecMonitor(SubprocVecEnv(env_fns))
-    set_emulator_grid(N_PROCESSES)
+    env = VecMonitor(
+        VecFrameStack(
+            VecTransposeImage(
+                SubprocVecEnv(env_fns),
+            ),
+            n_stack=3,
+        ),
+    )
+    set_emulator_grid(n_processes)
+
+    return env
+
+
+if __name__ == "__main__":
+    n_processes = 8
+    env = env_setup(n_processes)
 
     model = A2C(
         policy="CnnPolicy",
@@ -29,9 +46,9 @@ if __name__ == "__main__":
         seed=666,
     )
     model.learn(
-        total_timesteps=200_000,
-        log_interval=1000 / (5 * N_PROCESSES),
-        tb_log_name=f"default_a2c_10frames_gray",
+        total_timesteps=5_000_000,
+        log_interval=1000 // (5 * n_processes),
+        tb_log_name=f"default_a2c_3_stack",
         progress_bar=True,
     )
-    model.save("a2c_mmx4")
+    model.save("a2c_3_stack")

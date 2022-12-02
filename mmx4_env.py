@@ -31,9 +31,7 @@ class Mmx4Env(gym.Env):
         start_emulator(port)
         self.server.accept_connection()
 
-        # 60 frames = 1 second, but it always skips 10 frames on each iteration
-        self.max_steps = (60 // 10) * time
-        # self.max_steps = 60 * time
+        self.max_steps = 60 * time
         self.frame = 0
         self.first_load = True
 
