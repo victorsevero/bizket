@@ -65,8 +65,7 @@ end
 
 
 comm.socketServerSetTimeout(0)
-client.invisibleemulation(false)
-
+disable_hud()
 for _ = 1, 10 do
     frameadvance()
 end
@@ -81,9 +80,7 @@ while true do
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        -- for _ = 1, 10 do
         set_commands(response)
         frameadvance()
-        -- end
     end
 end

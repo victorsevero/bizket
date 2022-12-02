@@ -22,6 +22,7 @@ notebook = "^6.5.1"
 ipywidgets = "^8.0.2"
 jupyter = "^1.0.0"
 seaborn = "^0.12.1"
+snakeviz = "^2.1.1"
 
 [build-system]
 requires = ["poetry-core"]

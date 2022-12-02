@@ -46,9 +46,9 @@ if __name__ == "__main__":
         seed=666,
     )
     model.learn(
-        total_timesteps=5_000_000,
+        total_timesteps=100_000,
         log_interval=1000 // (5 * n_processes),
         tb_log_name=f"default_a2c_3_stack",
         progress_bar=True,
     )
-    model.save("a2c_3_stack")
+    model.save("a2c")
