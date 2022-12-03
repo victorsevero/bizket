@@ -10,7 +10,7 @@ SIZE_Y = 3 * SIZE_X // 4
 
 
 def start_emulator(port=6969):
-    subprocess.Popen(
+    return subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
             "--load-slot=3",

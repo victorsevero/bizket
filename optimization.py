@@ -1,13 +1,15 @@
-from typing import Dict, Any, Union, Callable
+import json
+import pickle
 
 import optuna
-from optuna.pruners import SuccessiveHalvingPruner
 from torch import nn
+from stable_baselines3 import A2C
+from stable_baselines3.common.evaluation import evaluate_policy
+
+from rl import env_setup
 
 
-def linear_schedule(
-    initial_value: Union[float, str],
-) -> Callable[[float], float]:
+def linear_schedule(initial_value):
     """
     Linear learning rate schedule.
     :param initial_value: (float or str)
@@ -27,7 +29,7 @@ def linear_schedule(
     return func
 
 
-def sample_a2c_params(trial: optuna.Trial) -> Dict[str, Any]:
+def sample_a2c_params(trial: optuna.Trial):
     """
     Sampler for A2C hyperparams.
     :param trial:
@@ -59,16 +61,11 @@ def sample_a2c_params(trial: optuna.Trial) -> Dict[str, Any]:
         "lr_schedule",
         ["linear", "constant"],
     )
-    learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1)
-    ent_coef = trial.suggest_loguniform("ent_coef", 0.00000001, 0.1)
-    vf_coef = trial.suggest_uniform("vf_coef", 0, 1)
-    # Uncomment for gSDE (continuous actions)
-    # log_std_init = trial.suggest_uniform("log_std_init", -4, 1)
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
+    ent_coef = trial.suggest_float("ent_coef", 0.00000001, 0.1, log=True)
+    vf_coef = trial.suggest_float("vf_coef", 0, 1)
     ortho_init = trial.suggest_categorical("ortho_init", [False, True])
     net_arch = trial.suggest_categorical("net_arch", ["small", "medium"])
-    # sde_net_arch = trial.suggest_categorical("sde_net_arch", [None, "tiny", "small"])
-    # full_std = trial.suggest_categorical("full_std", [False, True])
-    # activation_fn = trial.suggest_categorical('activation_fn', ['tanh', 'relu', 'elu', 'leaky_relu'])
     activation_fn = trial.suggest_categorical(
         "activation_fn", ["tanh", "relu"]
     )
@@ -80,12 +77,6 @@ def sample_a2c_params(trial: optuna.Trial) -> Dict[str, Any]:
         "small": [dict(pi=[64, 64], vf=[64, 64])],
         "medium": [dict(pi=[256, 256], vf=[256, 256])],
     }[net_arch]
-
-    # sde_net_arch = {
-    #     None: None,
-    #     "tiny": [64],
-    #     "small": [64, 64],
-    # }[sde_net_arch]
 
     activation_fn = {
         "tanh": nn.Tanh,
@@ -105,19 +96,54 @@ def sample_a2c_params(trial: optuna.Trial) -> Dict[str, Any]:
         "use_rms_prop": use_rms_prop,
         "vf_coef": vf_coef,
         "policy_kwargs": dict(
-            # log_std_init=log_std_init,
             net_arch=net_arch,
-            # full_std=full_std,
             activation_fn=activation_fn,
-            # sde_net_arch=sde_net_arch,
             ortho_init=ortho_init,
         ),
     }
 
 
-study = optuna.create_study(
-    sampler=sample_a2c_params,
-    pruner=SuccessiveHalvingPruner,
-    # load_if_exists=True,
-    direction="maximize",
-)
+def optimize_agent(trial):
+    """Train the model and optimize
+    Optuna maximises the negative log likelihood, so we
+    need to negate the reward here
+    """
+    global env, eval_env
+    model_params = sample_a2c_params(trial)
+
+    model = A2C(
+        policy="CnnPolicy",
+        env=env,
+        verbose=0,
+        seed=666,
+        **model_params,
+    )
+    model.learn(1000)
+    mean_reward, _ = evaluate_policy(
+        model,
+        eval_env,
+        n_eval_episodes=1,
+        deterministic=True,
+    )
+
+    return mean_reward
+
+
+if __name__ == "__main__":
+    env = env_setup(8)
+    eval_env = env_setup(8, default_port=6977, evaluating=True)
+
+    name = "a2c"
+    study = optuna.create_study(
+        study_name=name,
+        storage="sqlite:///studies.db",
+        direction="maximize",
+        load_if_exists=True,
+    )
+    n_trials = 100
+    study.optimize(optimize_agent, n_trials=n_trials, show_progress_bar=True)
+
+    with open(f"{name}_params.pkl", "wb") as fp:
+        pickle.dump(study.best_params, fp)
+    with open(f"{name}_params.json", "w") as fp:
+        json.dump(study.best_params, fp)

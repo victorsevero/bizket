@@ -18,8 +18,11 @@ def make_mmx4_env(port):
     return _init
 
 
-def env_setup(n_processes, default_port=6969):
-    env_fns = [make_mmx4_env(default_port + i) for i in range(n_processes)]
+def env_setup(n_processes, default_port=6969, evaluating=False):
+    if not evaluating:
+        env_fns = [make_mmx4_env(default_port + i) for i in range(n_processes)]
+    else:
+        env_fns = [make_mmx4_env(default_port)]
 
     env = VecMonitor(
         VecFrameStack(
@@ -27,15 +30,18 @@ def env_setup(n_processes, default_port=6969):
                 SubprocVecEnv(env_fns),
             ),
             n_stack=3,
-        ),
+        )
     )
-    set_emulator_grid(n_processes)
+
+    if not evaluating:
+        set_emulator_grid(n_processes)
+    else:
+        set_emulator_grid(n_processes + 1)
 
     return env
 
 
-if __name__ == "__main__":
-    n_processes = 8
+def new_training(n_processes, model_name):
     env = env_setup(n_processes)
 
     model = A2C(
@@ -46,9 +52,29 @@ if __name__ == "__main__":
         seed=666,
     )
     model.learn(
-        total_timesteps=100_000,
+        total_timesteps=2_000_000,
         log_interval=1000 // (5 * n_processes),
-        tb_log_name=f"default_a2c_3_stack",
+        tb_log_name=model_name,
         progress_bar=True,
+        reset_num_timesteps=False,
     )
-    model.save("a2c")
+    model.save(model_name)
+
+
+def continue_training(n_processes, model_name):
+    env = env_setup(n_processes)
+
+    model = A2C.load(model_name, env=env)
+    model.learn(
+        total_timesteps=2_000_000,
+        log_interval=1000 // (5 * n_processes),
+        tb_log_name=model_name,
+        progress_bar=True,
+        reset_num_timesteps=False,
+    )
+    model.save(model_name)
+
+
+if __name__ == "__main__":
+    new_training(n_processes=1, model_name="test")
+    # continue_training(n_processes=8, model_name="test")

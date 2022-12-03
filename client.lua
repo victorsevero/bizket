@@ -66,7 +66,7 @@ end
 
 comm.socketServerSetTimeout(0)
 disable_hud()
-for _ = 1, 10 do
+for _ = 1, 60 do
     frameadvance()
 end
 
@@ -74,6 +74,7 @@ while true do
     local msg = get_msg()
     comm.socketServerSend(msg)
     local response = comm.socketServerScreenShotResponse()
+    -- print(response)
     if response == "load" then
         savestate.loadslot(3)
         disable_hud()

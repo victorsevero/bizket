@@ -28,7 +28,7 @@ class Mmx4Env(gym.Env):
         self.action_space = spaces.Discrete(5)
 
         self.server = Server(port=port)
-        start_emulator(port)
+        self._process = start_emulator(port)
         self.server.accept_connection()
 
         self.max_steps = 60 * time
@@ -86,7 +86,7 @@ class Mmx4Env(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def close(self):
-        ...
+        self.process.terminate()
 
 
 if __name__ == "__main__":

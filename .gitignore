@@ -175,10 +175,11 @@ notes.txt
 # model outputs
 /results*
 /fitness.png
-/model.pkl
-/nn.pkl
 *.zip
 /tmp
+*.pkl
+*_params.json
+*.db
 
 # game ROMs
 /roms/
