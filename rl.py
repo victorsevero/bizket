@@ -8,6 +8,7 @@ from stable_baselines3.common.vec_env import (
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
+from callbacks import ImageRecorderCallback
 
 
 def make_mmx4_env(port):
@@ -53,6 +54,7 @@ def new_training(n_processes, model_name):
     )
     model.learn(
         total_timesteps=total_timesteps,
+        callback=ImageRecorderCallback(),
         log_interval=1000 // (5 * n_processes),
         tb_log_name=model_name,
         progress_bar=True,
@@ -76,7 +78,8 @@ def continue_training(n_processes, model_name):
 
 
 if __name__ == "__main__":
-    total_timesteps = 1_000_000
-    model_name = "defaultA2c_3stk_normRew"
-    new_training(n_processes=1, model_name="test")
+    total_timesteps = 1_000
+    model_name = "test"
+    # model_name = "defaultA2c_3stk_normRew"
+    new_training(n_processes=1, model_name=model_name)
     # continue_training(n_processes=8, model_name=model_name)

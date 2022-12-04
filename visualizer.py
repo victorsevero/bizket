@@ -12,17 +12,17 @@ from tqdm import trange
 torch.autograd.set_grad_enabled(True)
 
 
-def make_layer_grid(model, out_size, layer_idx, first_channel_only=True):
+def make_layer_grid(model, out_size, layer_idx, single_channel=True):
     n_rows, n_cols = get_grid_shape(out_size)
 
     plt.figure(figsize=(32, 18))
     for i in trange(out_size):
-        img_arr = gradient_ascent(model, i)
+        img_arr = gradient_ascent(model, i, loop_range=100)
 
         plt.subplot(n_rows, n_cols, i + 1)
-        if first_channel_only:
+        if single_channel:
             plt.imshow(
-                img_arr[..., 0],
+                img_arr[..., 2],
                 cmap="gray",
                 vmin=0,
                 vmax=255,
@@ -33,13 +33,14 @@ def make_layer_grid(model, out_size, layer_idx, first_channel_only=True):
         plt.title(f"Filter #{i}")
         plt.axis("off")
     plt.suptitle(f"Layer {layer_idx}", fontsize=20)
-    plt.tight_layout(h_pad=4, rect=[0, 0, 1, 0.97])
+    h_pad = 128 / (n_rows * n_cols)
+    plt.tight_layout(h_pad=h_pad, rect=[0, 0, 1, 0.97])
 
     global model_name
-    sub_dir = "single_channel" if first_channel_only else "multi_channel"
+    sub_dir = "single_channel" if single_channel else "multi_channel"
     layers_dir = f"layers_activations/{model_name}/{sub_dir}"
     os.makedirs(layers_dir, exist_ok=True)
-    path = f"{layers_dir}/layer_{round(len(model)/2)}.png"
+    path = f"{layers_dir}/layer_{layer_idx}.png"
     plt.savefig(path)
 
 
@@ -122,4 +123,9 @@ if __name__ == "__main__":
         if isinstance(layer, nn.ReLU):
             model = cnn[:layer_idx]
             conv2d_idx = layer_idx - 2
-            make_layer_grid(model, model[conv2d_idx].out_channels, conv2d_idx)
+            make_layer_grid(
+                model=model,
+                out_size=model[conv2d_idx].out_channels,
+                layer_idx=conv2d_idx,
+                single_channel=True,
+            )
