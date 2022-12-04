@@ -4,7 +4,7 @@ from rl import env_setup
 
 
 def enjoy(path):
-    env = env_setup(1, monitor=False)
+    env = env_setup(1)
     model = A2C.load(path, env=env)
 
     obs = env.reset()
@@ -15,4 +15,4 @@ def enjoy(path):
 
 
 if __name__ == "__main__":
-    enjoy("default_a2c_3_stack")
+    enjoy("defaultA2c_3stk_normRew")

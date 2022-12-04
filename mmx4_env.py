@@ -73,11 +73,9 @@ class Mmx4Env(gym.Env):
         self.frame += 1
 
         terminated = not (self._player_hp and self._boss_hp)
-        boss_weight = 1
-        # weight * boss taken damage - player taken damage
-        reward = boss_weight * (past_boss_hp - self._boss_hp) - (
-            past_player_hp - self._player_hp
-        )
+        boss_dmg = (past_boss_hp - self._boss_hp) / 48
+        player_dmg = (past_player_hp - self._player_hp) / 32
+        reward = boss_dmg - player_dmg
 
         truncated = self.frame >= self.max_steps
         observation = self._get_obs()
@@ -86,7 +84,7 @@ class Mmx4Env(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def close(self):
-        self.process.terminate()
+        self._process.terminate()
 
 
 if __name__ == "__main__":

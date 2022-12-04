@@ -13,6 +13,7 @@ stable-baselines3 = { git = "https://github.com/carlosluis/stable-baselines3", r
 pygetwindow = "^0.0.9"
 torch-tb-profiler = "^0.4.0"
 optuna = "^3.0.3"
+torchviz = "^0.0.2"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^5.0.4"

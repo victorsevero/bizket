@@ -47,7 +47,6 @@ def sample_a2c_params(trial: optuna.Trial):
         "max_grad_norm",
         [0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 5],
     )
-    # Toggle PyTorch RMS Prop (different from TF one, cf doc)
     use_rms_prop = trial.suggest_categorical("use_rms_prop", [False, True])
     gae_lambda = trial.suggest_categorical(
         "gae_lambda",
@@ -62,12 +61,13 @@ def sample_a2c_params(trial: optuna.Trial):
         ["linear", "constant"],
     )
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
-    ent_coef = trial.suggest_float("ent_coef", 0.00000001, 0.1, log=True)
+    ent_coef = trial.suggest_float("ent_coef", 1e-8, 0.1, log=True)
     vf_coef = trial.suggest_float("vf_coef", 0, 1)
     ortho_init = trial.suggest_categorical("ortho_init", [False, True])
     net_arch = trial.suggest_categorical("net_arch", ["small", "medium"])
     activation_fn = trial.suggest_categorical(
-        "activation_fn", ["tanh", "relu"]
+        "activation_fn",
+        ["tanh", "relu"],
     )
 
     if lr_schedule == "linear":
@@ -103,13 +103,59 @@ def sample_a2c_params(trial: optuna.Trial):
     }
 
 
+def small_grid_sample_a2c_params(trial: optuna.Trial):
+    """
+    Sampler for A2C hyperparams.
+    :param trial:
+    :return:
+    """
+    gamma = trial.suggest_categorical(
+        "gamma",
+        [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999],
+    )
+    lr_schedule = trial.suggest_categorical(
+        "lr_schedule",
+        ["linear", "constant"],
+    )
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
+    net_arch = trial.suggest_categorical("net_arch", ["small", "medium"])
+    activation_fn = trial.suggest_categorical(
+        "activation_fn",
+        ["tanh", "relu"],
+    )
+
+    if lr_schedule == "linear":
+        learning_rate = linear_schedule(learning_rate)
+
+    net_arch = {
+        "small": [dict(pi=[64, 64], vf=[64, 64])],
+        "medium": [dict(pi=[256, 256], vf=[256, 256])],
+    }[net_arch]
+
+    activation_fn = {
+        "tanh": nn.Tanh,
+        "relu": nn.ReLU,
+        "elu": nn.ELU,
+        "leaky_relu": nn.LeakyReLU,
+    }[activation_fn]
+
+    return {
+        "gamma": gamma,
+        "learning_rate": learning_rate,
+        "policy_kwargs": dict(
+            net_arch=net_arch,
+            activation_fn=activation_fn,
+        ),
+    }
+
+
 def optimize_agent(trial):
     """Train the model and optimize
     Optuna maximises the negative log likelihood, so we
     need to negate the reward here
     """
     global env, eval_env
-    model_params = sample_a2c_params(trial)
+    model_params = small_grid_sample_a2c_params(trial)
 
     model = A2C(
         policy="CnnPolicy",
@@ -118,7 +164,7 @@ def optimize_agent(trial):
         seed=666,
         **model_params,
     )
-    model.learn(1000)
+    model.learn(50_000)
     mean_reward, _ = evaluate_policy(
         model,
         eval_env,
@@ -130,10 +176,11 @@ def optimize_agent(trial):
 
 
 if __name__ == "__main__":
-    env = env_setup(8)
-    eval_env = env_setup(8, default_port=6977, evaluating=True)
+    n_processes = 8
+    env = env_setup(n_processes)
+    eval_env = env_setup(n_processes, default_port=6977, evaluating=True)
 
-    name = "a2c"
+    name = "small_grid_a2c"
     study = optuna.create_study(
         study_name=name,
         storage="sqlite:///studies.db",
@@ -141,9 +188,21 @@ if __name__ == "__main__":
         load_if_exists=True,
     )
     n_trials = 100
-    study.optimize(optimize_agent, n_trials=n_trials, show_progress_bar=True)
+    completed = False
+    while not completed:
+        try:
+            study.optimize(
+                optimize_agent,
+                n_trials=n_trials,
+                show_progress_bar=True,
+            )
+            completed = True
+        except RuntimeError:
+            completed_trials = [
+                x for x in study.trials if x.state.name == "COMPLETE"
+            ]
+            n_completed_trials = len(completed_trials)
+            n_trials -= n_completed_trials
 
-    with open(f"{name}_params.pkl", "wb") as fp:
-        pickle.dump(study.best_params, fp)
     with open(f"{name}_params.json", "w") as fp:
-        json.dump(study.best_params, fp)
+        json.dump(study.best_params, fp, indent=4)

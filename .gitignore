@@ -180,6 +180,7 @@ notes.txt
 *.pkl
 *_params.json
 *.db
+layers_activations/
 
 # game ROMs
 /roms/
