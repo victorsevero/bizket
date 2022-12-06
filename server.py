@@ -68,7 +68,7 @@ class Server:
     @staticmethod
     def _decode_img(data: bytes):
         im = Image.open(BytesIO(data)).crop((18, 0, 338, 240))
-        im = im.convert("RGB").resize((128, 128))
+        im = im.convert("RGB").resize((84, 84))
         arr = np.array(im.convert("L"))
         return np.expand_dims(arr, axis=2)
 

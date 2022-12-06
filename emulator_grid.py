@@ -13,9 +13,8 @@ def start_emulator(port=6969):
     return subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
+            r"--config=C:\Users\victo\Documents\bizket\config.ini",
             "--load-slot=3",
-            r"--lua=C:\Users\victo\Documents\bizket\client.lua",
-            "--luaconsole",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
         ]

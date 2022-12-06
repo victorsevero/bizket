@@ -1,32 +1,11 @@
 import json
-import pickle
 
 import optuna
 from torch import nn
-from stable_baselines3 import A2C
+from stable_baselines3 import A2C, DQN
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from rl import env_setup
-
-
-def linear_schedule(initial_value):
-    """
-    Linear learning rate schedule.
-    :param initial_value: (float or str)
-    :return: (function)
-    """
-    if isinstance(initial_value, str):
-        initial_value = float(initial_value)
-
-    def func(progress_remaining: float) -> float:
-        """
-        Progress will decrease from 1 (beginning) to 0
-        :param progress_remaining: (float)
-        :return: (float)
-        """
-        return progress_remaining * initial_value
-
-    return func
+from rl import env_setup, linear_schedule
 
 
 def sample_a2c_params(trial: optuna.Trial):
@@ -103,6 +82,81 @@ def sample_a2c_params(trial: optuna.Trial):
     }
 
 
+def sample_dqn_params(trial: optuna.Trial):
+    """
+    Sampler for DQN hyperparams.
+    :param trial:
+    :return:
+    """
+    gamma = trial.suggest_categorical(
+        "gamma", [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999]
+    )
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
+    batch_size = trial.suggest_categorical(
+        "batch_size",
+        [16, 32, 64, 100, 128, 256, 512],
+    )
+    buffer_size = trial.suggest_categorical(
+        "buffer_size",
+        [int(1e4), int(5e4), int(1e5), int(1e6)],
+    )
+    exploration_final_eps = trial.suggest_float(
+        "exploration_final_eps",
+        0,
+        0.2,
+    )
+    exploration_fraction = trial.suggest_float(
+        "exploration_fraction",
+        0,
+        0.5,
+    )
+    target_update_interval = trial.suggest_categorical(
+        "target_update_interval",
+        [1, 1000, 5000, 10000, 15000, 20000],
+    )
+    learning_starts = trial.suggest_categorical(
+        "learning_starts",
+        [0, 1000, 5000, 10000, 20000],
+    )
+
+    train_freq = trial.suggest_categorical(
+        "train_freq",
+        [1, 4, 8, 16, 128, 256, 1000],
+    )
+    subsample_steps = trial.suggest_categorical(
+        "subsample_steps",
+        [1, 2, 4, 8],
+    )
+    gradient_steps = max(train_freq // subsample_steps, 1)
+
+    net_arch = trial.suggest_categorical(
+        "net_arch",
+        ["tiny", "small", "medium"],
+    )
+
+    net_arch = {
+        "tiny": [64],
+        "small": [64, 64],
+        "medium": [256, 256],
+    }[net_arch]
+
+    hyperparams = {
+        "gamma": gamma,
+        "learning_rate": learning_rate,
+        "batch_size": batch_size,
+        "buffer_size": buffer_size,
+        "train_freq": train_freq,
+        "gradient_steps": gradient_steps,
+        "exploration_fraction": exploration_fraction,
+        "exploration_final_eps": exploration_final_eps,
+        "target_update_interval": target_update_interval,
+        "learning_starts": learning_starts,
+        "policy_kwargs": dict(net_arch=net_arch),
+    }
+
+    return hyperparams
+
+
 def small_grid_sample_a2c_params(trial: optuna.Trial):
     """
     Sampler for A2C hyperparams.
@@ -156,53 +210,64 @@ def optimize_agent(trial):
     """
     global env, eval_env
     model_params = small_grid_sample_a2c_params(trial)
+    # model_params = sample_dqn_params(trial)
 
-    model = A2C(
-        policy="CnnPolicy",
-        env=env,
-        verbose=0,
-        seed=666,
-        **model_params,
-    )
-    model.learn(50_000)
-    mean_reward, _ = evaluate_policy(
-        model,
-        eval_env,
-        n_eval_episodes=1,
-        deterministic=True,
-    )
+    try:
+        model = A2C(
+            policy="CnnPolicy",
+            env=env,
+            verbose=0,
+            seed=666,
+            **model_params,
+        )
+        # model = DQN(
+        #     policy="CnnPolicy",
+        #     env=env,
+        #     verbose=0,
+        #     seed=666,
+        #     **model_params,
+        # )
+        model.learn(100)
+        reward, _ = evaluate_policy(
+            model,
+            eval_env,
+            n_eval_episodes=1,
+            deterministic=True,
+        )
 
-    return mean_reward
+        return reward
+    except:
+        return -1
 
 
 if __name__ == "__main__":
-    n_processes = 8
-    env = env_setup(n_processes)
-    eval_env = env_setup(n_processes, default_port=6977, evaluating=True)
+    with open("config_a2c.json") as fp:
+        config = json.load(fp)
+    n_processes = config["n_processes"]
+
+    env = env_setup(config)
+    eval_env = env_setup(config, default_port=6977, evaluating=True)
 
     name = "small_grid_a2c"
+    # name = "dqn"
     study = optuna.create_study(
         study_name=name,
-        storage="sqlite:///studies.db",
+        # storage="sqlite:///studies.db",
         direction="maximize",
         load_if_exists=True,
     )
-    n_trials = 100
-    completed = False
-    while not completed:
-        try:
-            study.optimize(
-                optimize_agent,
-                n_trials=n_trials,
-                show_progress_bar=True,
-            )
-            completed = True
-        except RuntimeError:
-            completed_trials = [
-                x for x in study.trials if x.state.name == "COMPLETE"
-            ]
-            n_completed_trials = len(completed_trials)
-            n_trials -= n_completed_trials
+    n_trials = 10
+    # completed = False
+    # while not completed:
+    # try:
+    study.optimize(optimize_agent, n_trials=n_trials, show_progress_bar=True)
+    # completed = True
+    # except RuntimeError:
+    #     completed_trials = [
+    #         x for x in study.trials if x.state.name == "COMPLETE"
+    #     ]
+    #     n_completed_trials = len(completed_trials)
+    #     n_trials -= n_completed_trials
 
-    with open(f"{name}_params.json", "w") as fp:
+    with open(f"params_{name}.json", "w") as fp:
         json.dump(study.best_params, fp, indent=4)

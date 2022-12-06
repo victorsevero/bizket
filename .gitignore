@@ -163,7 +163,7 @@ cython_debug/
 .vscode/
 
 # local garbage
-/bizhawk_config.ini
+config.ini
 /*.png
 /*.bmp
 notes.txt

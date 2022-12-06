@@ -1,4 +1,5 @@
 import os
+import json
 
 import numpy as np
 import torch
@@ -7,6 +8,8 @@ from stable_baselines3 import A2C
 from torchvision import utils
 import matplotlib.pyplot as plt
 from tqdm import trange
+
+from rl import model_parser
 
 
 torch.autograd.set_grad_enabled(True)
@@ -115,9 +118,19 @@ def deprocess_image(x):
 
 
 if __name__ == "__main__":
-    model_name = "defaultA2c_3stk_normRew"
-    model = A2C.load(model_name)
-    cnn = model.policy.features_extractor.cnn
+    with open("config_dqn.json") as fp:
+        config = json.load(fp)
+
+    model_name = config["model_name"]
+    Model = model_parser(config)
+    model = Model.load(f"models/{model_name}")
+
+    if config["model"] == "A2C":
+        cnn = model.policy.features_extractor.cnn
+    elif config["model"] == "DQN":
+        cnn = model.policy.q_net.features_extractor.cnn
+    else:
+        raise ValueError(f"Invalid model {config['model']}")
 
     for layer_idx, layer in enumerate(cnn, start=1):
         if isinstance(layer, nn.ReLU):
@@ -127,5 +140,5 @@ if __name__ == "__main__":
                 model=model,
                 out_size=model[conv2d_idx].out_channels,
                 layer_idx=conv2d_idx,
-                single_channel=True,
+                single_channel=False,
             )

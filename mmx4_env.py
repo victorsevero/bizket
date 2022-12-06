@@ -21,7 +21,7 @@ class Mmx4Env(gym.Env):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
-            shape=(128, 128, 1),
+            shape=(84, 84, 1),
             dtype=np.uint8,
         )
 
@@ -31,7 +31,7 @@ class Mmx4Env(gym.Env):
         self._process = start_emulator(port)
         self.server.accept_connection()
 
-        self.max_steps = 60 * time
+        self.max_steps = 60 // 6 * time
         self.frame = 0
         self.first_load = True
 

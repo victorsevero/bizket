@@ -74,14 +74,15 @@ while true do
     local msg = get_msg()
     comm.socketServerSend(msg)
     local response = comm.socketServerScreenShotResponse()
-    -- print(response)
     if response == "load" then
         savestate.loadslot(3)
         disable_hud()
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
-        set_commands(response)
-        frameadvance()
+        for _ = 1, 6 do
+            set_commands(response)
+            frameadvance()
+        end
     end
 end
