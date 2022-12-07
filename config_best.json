@@ -1,7 +1,7 @@
 {
     "model_name": "Ppo_zoo_3stk_fs6_hw84",
-    "n_processes": 8,
-    "new_model": true,
+    "n_processes": 1,
+    "new_model": false,
     "model": "PPO",
     "n_stack": 3,
     "model_kwargs": {

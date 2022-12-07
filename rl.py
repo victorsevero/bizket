@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.vec_env import (
@@ -8,7 +9,11 @@ from stable_baselines3.common.vec_env import (
     VecMonitor,
 )
 from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import (
+    CheckpointCallback,
+    EvalCallback,
+    StopTrainingOnRewardThreshold,
+)
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
@@ -90,12 +95,10 @@ def config_parser(config):
             ),
         ]
 
-    if (
-        config.get("model_kwargs", {})
-        .get("policy_kwargs", {})
-        .get("optimizer_class")
-        == "RMSpropTFLike"
-    ):
+    policy_kwargs = config.get("model_kwargs", {}).get("policy_kwargs")
+    if (policy_kwargs is not None) and policy_kwargs.get(
+        "optimizer_class"
+    ) == "RMSpropTFLike":
         config["model_kwargs"]["policy_kwargs"][
             "optimizer_class"
         ] = RMSpropTFLike
@@ -104,9 +107,12 @@ def config_parser(config):
         value = float(config["model_kwargs"]["learning_rate"].split("_")[-1])
         config["model_kwargs"]["learning_rate"] = linear_schedule(value)
 
-    if str(config["model_kwargs"]["clip_range"]).startswith("lin_"):
-        value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
-        config["model_kwargs"]["clip_range"] = linear_schedule(value)
+    try:
+        if str(config["model_kwargs"]["clip_range"]).startswith("lin_"):
+            value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
+            config["model_kwargs"]["clip_range"] = linear_schedule(value)
+    except:
+        ...
 
     return config
 

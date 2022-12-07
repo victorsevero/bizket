@@ -1,18 +1,26 @@
-from stable_baselines3 import A2C
+import json
 
-from rl import env_setup
+from stable_baselines3.common.evaluation import evaluate_policy
+
+from rl import config_parser, env_setup
 
 
-def enjoy(path):
-    env = env_setup(1)
-    model = A2C.load(path, env=env)
+def enjoy(config):
+    env = env_setup(config)
+    Model = config["model"]
 
-    obs = env.reset()
-    done = [False]
-    while not done[0]:
-        action, _ = model.predict(obs, deterministic=True)
-        obs, _, done, _ = env.step(action)
+    model = Model.load(f"models/{config['model_name']}", env=env)
+
+    evaluate_policy(
+        model=model,
+        env=env,
+        n_eval_episodes=1,
+        deterministic=True,
+    )
 
 
 if __name__ == "__main__":
-    enjoy("defaultA2c_3stk_normRew")
+    with open("config_best.json") as fp:
+        config = json.load(fp)
+    config = config_parser(config)
+    enjoy(config)

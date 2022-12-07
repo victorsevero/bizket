@@ -1,6 +1,6 @@
 {
-    "model_name": "defaultDqn_3stk_normRew_fs4_hw84",
-    "n_processes": 8,
+    "model_name": "defaultDqn_3stk_fs4_hw84",
+    "n_processes": 1,
     "new_model": true,
     "model": "DQN",
     "n_stack": 3,

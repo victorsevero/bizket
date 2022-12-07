@@ -4,12 +4,10 @@ import json
 import numpy as np
 import torch
 from torch import nn
-from stable_baselines3 import A2C
+from stable_baselines3 import A2C, PPO, DQN
 from torchvision import utils
 import matplotlib.pyplot as plt
 from tqdm import trange
-
-from rl import model_parser
 
 
 torch.autograd.set_grad_enabled(True)
@@ -118,14 +116,22 @@ def deprocess_image(x):
 
 
 if __name__ == "__main__":
-    with open("config_dqn.json") as fp:
+    with open("config_ppo.json") as fp:
         config = json.load(fp)
 
     model_name = config["model_name"]
-    Model = model_parser(config)
-    model = Model.load(f"models/{model_name}")
 
     if config["model"] == "A2C":
+        Model = A2C
+    elif config["model"] == "DQN":
+        Model = DQN
+    elif config["model"] == "PPO":
+        Model = PPO
+
+    # model = Model.load(f"models/{model_name}")
+    model = Model.load(f"checkpoints\Ppo_zoo_3stk_fs4_hw84_4500000_steps")
+
+    if (config["model"] == "A2C") or (config["model"] == "PPO"):
         cnn = model.policy.features_extractor.cnn
     elif config["model"] == "DQN":
         cnn = model.policy.q_net.features_extractor.cnn
