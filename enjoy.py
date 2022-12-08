@@ -10,6 +10,11 @@ def enjoy(config):
     Model = config["model"]
 
     model = Model.load(f"models/{config['model_name']}", env=env)
+    # for i in range(500_000, 10_500_000, 500_000):
+    # model = Model.load(
+    #     f"checkpoints/Ppo_zoo_3stk_fs4_hw84_{i}_steps",
+    #     env=env,
+    # )
 
     evaluate_policy(
         model=model,

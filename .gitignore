@@ -164,6 +164,7 @@ cython_debug/
 
 # local garbage
 config.ini
+enjoy_config.ini
 /*.png
 /*.bmp
 notes.txt

@@ -116,7 +116,7 @@ def deprocess_image(x):
 
 
 if __name__ == "__main__":
-    with open("config_ppo.json") as fp:
+    with open("config_best.json") as fp:
         config = json.load(fp)
 
     model_name = config["model_name"]
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         Model = PPO
 
     # model = Model.load(f"models/{model_name}")
-    model = Model.load(f"checkpoints\Ppo_zoo_3stk_fs4_hw84_4500000_steps")
+    model = Model.load(f"models\Ppo_zoo_3stk_fs6_hw84")
 
     if (config["model"] == "A2C") or (config["model"] == "PPO"):
         cnn = model.policy.features_extractor.cnn
