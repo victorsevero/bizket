@@ -1,7 +1,7 @@
-import json
-from copy import deepcopy
+import os
 
-from stable_baselines3 import A2C, DQN, PPO
+import yaml
+from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import (
     SubprocVecEnv,
     VecTransposeImage,
@@ -28,12 +28,12 @@ def make_mmx4_env(port):
     return _init
 
 
-def env_setup(config, default_port=6969, evaluating=False):
-    n_processes = config["n_processes"]
-    n_stack = config["n_stack"]
+def env_setup(env_config, default_port=6969, evaluating=False):
+    n_envs = env_config["n_envs"]
+    n_stack = env_config["n_stack"]
 
     if not evaluating:
-        env_fns = [make_mmx4_env(default_port + i) for i in range(n_processes)]
+        env_fns = [make_mmx4_env(default_port + i) for i in range(n_envs)]
     else:
         env_fns = [make_mmx4_env(default_port)]
 
@@ -47,9 +47,9 @@ def env_setup(config, default_port=6969, evaluating=False):
     )
 
     if not evaluating:
-        set_emulator_grid(n_processes)
+        set_emulator_grid(n_envs)
     else:
-        set_emulator_grid(n_processes + 1)
+        set_emulator_grid(n_envs + 1)
 
     return env
 
@@ -75,82 +75,61 @@ def linear_schedule(initial_value):
 
 
 def config_parser(config):
-    if config["model"] == "A2C":
-        config["model"] = A2C
-    elif config["model"] == "DQN":
-        config["model"] = DQN
-    elif config["model"] == "PPO":
+    if config["model"] == "PPO":
         config["model"] = PPO
     else:
         raise ValueError(f"Invalid model {config['model']}")
-
-    if config["learn_kwargs"]["callback"] == "ModelArchCallback":
-        config["learn_kwargs"]["callback"] = [
-            ModelArchCallback(),
-            CheckpointCallback(
-                save_freq=500_000 // config["n_processes"],
-                save_path="checkpoints/",
-                name_prefix=config["model_name"],
-                save_replay_buffer=True,
-            ),
-        ]
-
-    policy_kwargs = config.get("model_kwargs", {}).get("policy_kwargs")
-    if (policy_kwargs is not None) and policy_kwargs.get(
-        "optimizer_class"
-    ) == "RMSpropTFLike":
-        config["model_kwargs"]["policy_kwargs"][
-            "optimizer_class"
-        ] = RMSpropTFLike
 
     if str(config["model_kwargs"]["learning_rate"]).startswith("lin_"):
         value = float(config["model_kwargs"]["learning_rate"].split("_")[-1])
         config["model_kwargs"]["learning_rate"] = linear_schedule(value)
 
-    try:
-        if str(config["model_kwargs"]["clip_range"]).startswith("lin_"):
-            value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
-            config["model_kwargs"]["clip_range"] = linear_schedule(value)
-    except:
-        ...
+    if str(config["model_kwargs"]["clip_range"]).startswith("lin_"):
+        value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
+        config["model_kwargs"]["clip_range"] = linear_schedule(value)
 
     return config
 
 
-def new_training(config):
-    env = env_setup(config)
+def train_model(config):
+    env = env_setup(config["env"])
+    Model: PPO = config["model"]
 
-    Model = config["model"]
-    model = Model(env=env, **config["model_kwargs"])
+    if os.path.exists(f"models/{config['model_name']}"):
+        model = Model.load(f"models/{config['model_name']}", env=env)
+        reset_num_timesteps = False
+    else:
+        model = Model(
+            env=env,
+            tensorboard_log="mmx4_logs/",
+            verbose=0,
+            seed=666,
+            device="auto",
+            _init_setup_model=True,
+            **config["model_kwargs"],
+        )
+        reset_num_timesteps = True
 
-    model.learn(
-        tb_log_name=config["model_name"],
-        reset_num_timesteps=config["new_model"],
-        **config["learn_kwargs"],
+    checkpoint_callback = CheckpointCallback(
+        save_freq=config["save_freq"] // config["env"]["n_envs"],
+        save_path="checkpoints/",
+        name_prefix=config["model_name"],
+        save_replay_buffer=True,
     )
-    model.save(f"models/{config['model_name']}")
-
-
-def continue_training(config):
-    env = env_setup(config)
-
-    Model = config["model"]
-    model = Model.load(f"models/{config['model_name']}", env=env)
 
     model.learn(
         tb_log_name=config["model_name"],
-        reset_num_timesteps=config["new_model"],
+        reset_num_timesteps=reset_num_timesteps,
+        callback=[ModelArchCallback(), checkpoint_callback],
+        progress_bar=True,
         **config["learn_kwargs"],
     )
     model.save(f"models/{config['model_name']}")
 
 
 if __name__ == "__main__":
-    with open("config_ppo.json") as fp:
-        config = json.load(fp)
+    with open("models_configs/zero.yml") as fp:
+        config = yaml.safe_load(fp)
     config = config_parser(config)
 
-    if config["new_model"]:
-        new_training(config)
-    else:
-        continue_training(config)
+    train_model(config)

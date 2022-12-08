@@ -163,28 +163,7 @@ cython_debug/
 .vscode/
 
 # local garbage
-config.ini
-enjoy_config.ini
-/*.png
-/*.bmp
 notes.txt
 
-# scripts for quick test purposes
-/test.lua
-/test.py
-
-# model outputs
-/results*
-/fitness.png
-*.zip
-/tmp
-*.pkl
-*_params.json
-*.db
-layers_activations/
-
-# game ROMs
-/roms/
-
 # Tensorboard logs
-/*_logs/
+mmx4_logs/

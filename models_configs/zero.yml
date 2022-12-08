@@ -1,0 +1,19 @@
+---
+model_name: z0_ppo_zoo
+model: PPO
+save_freq: 500_000
+env:
+  n_envs: 8
+  n_stack: 3
+model_kwargs:
+  policy: CnnPolicy
+  n_steps: 128
+  n_epochs: 4
+  batch_size: 256
+  learning_rate: lin_2.5e-4
+  clip_range: lin_0.1
+  vf_coef: 0.5
+  ent_coef: 0.01
+learn_kwargs:
+  total_timesteps: 10_000_000
+  log_interval: 1

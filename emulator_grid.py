@@ -13,9 +13,9 @@ def start_emulator(port=6969):
     return subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
-            # r"--config=C:\Users\victo\Documents\bizket\config.ini",
-            r"--config=C:\Users\victo\Documents\bizket\enjoy_config.ini",
-            "--load-slot=3",
+            r"--config=C:\Users\victo\Documents\bizket\emulators_configs\config.ini",
+            # r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy_config.ini",
+            "--load-slot=0",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
         ]

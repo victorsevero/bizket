@@ -1,12 +1,13 @@
-import json
-
+import yaml
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from rl import config_parser, env_setup
 
 
 def enjoy(config):
-    env = env_setup(config)
+    config["env"]["n_envs"] = 1
+    env = env_setup(config["env"])
+
     Model = config["model"]
 
     model = Model.load(f"models/{config['model_name']}", env=env)
@@ -25,7 +26,7 @@ def enjoy(config):
 
 
 if __name__ == "__main__":
-    with open("config_best.json") as fp:
-        config = json.load(fp)
+    with open("models_configs/best_model.yml") as fp:
+        config = yaml.safe_load(fp)
     config = config_parser(config)
     enjoy(config)
