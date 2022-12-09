@@ -73,7 +73,11 @@ class Server:
         return np.expand_dims(arr, axis=2)
 
     def send_msg(self, msg: str):
-        encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])
+        if isinstance(msg, list):
+            joined_msg = "".join([self.ACTIONS_MAP[x] for x in msg])
+            encoded_msg = self._encode_msg(joined_msg)
+        else:
+            encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])
         self._connection.sendall(encoded_msg)
 
     @staticmethod

@@ -8,11 +8,8 @@ from stable_baselines3.common.vec_env import (
     VecFrameStack,
     VecMonitor,
 )
-from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike
 from stable_baselines3.common.callbacks import (
     CheckpointCallback,
-    EvalCallback,
-    StopTrainingOnRewardThreshold,
 )
 
 from emulator_grid import set_emulator_grid
@@ -95,7 +92,7 @@ def train_model(config):
     env = env_setup(config["env"])
     Model: PPO = config["model"]
 
-    if os.path.exists(f"models/{config['model_name']}"):
+    if os.path.exists(f"models/{config['model_name']}.zip"):
         model = Model.load(f"models/{config['model_name']}", env=env)
         reset_num_timesteps = False
     else:
@@ -112,8 +109,8 @@ def train_model(config):
 
     checkpoint_callback = CheckpointCallback(
         save_freq=config["save_freq"] // config["env"]["n_envs"],
-        save_path="checkpoints/",
-        name_prefix=config["model_name"],
+        save_path=f"checkpoints/{config['model_name']}/",
+        name_prefix="model",
         save_replay_buffer=True,
     )
 

@@ -9,12 +9,11 @@ from emulator_grid import start_emulator
 
 class Mmx4Env(gym.Env):
     ACTION_TO_BUTTON = {
-        0: "nothing",
-        1: "left",
-        2: "right",
-        3: "cross",
-        4: "square",
-        # 5: "circle",
+        0: "left",
+        1: "right",
+        2: "cross",
+        3: "square",
+        4: "circle",
     }
 
     def __init__(self, port=6969, time=600):
@@ -25,7 +24,7 @@ class Mmx4Env(gym.Env):
             dtype=np.uint8,
         )
 
-        self.action_space = spaces.Discrete(5)
+        self.action_space = spaces.MultiBinary(5)
 
         self.server = Server(port=port)
         self._process = start_emulator(port)
@@ -62,7 +61,7 @@ class Mmx4Env(gym.Env):
         past_player_hp = self._player_hp
         past_boss_hp = self._boss_hp
 
-        self.server.send_msg(self.ACTION_TO_BUTTON[action])
+        self.server.send_msg(self._actions_to_buttons(action))
 
         (
             self._screen_matrix,
@@ -86,7 +85,17 @@ class Mmx4Env(gym.Env):
     def close(self):
         self._process.terminate()
 
+    def _actions_to_buttons(self, action):
+        buttons = [
+            self.ACTION_TO_BUTTON[i] for i, act in enumerate(action) if act
+        ]
+        if not buttons:
+            buttons = ["nothing"]
+
+        return buttons
+
 
 if __name__ == "__main__":
     env = Mmx4Env(port=6969)
     check_env(env)
+    print("Environment passed the check")
