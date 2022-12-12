@@ -161,10 +161,3 @@ cython_debug/
 
 # VSCode
 .vscode/
-
-# Tensorboard logs
-mmx4_logs/
-old_logs/
-
-# Optuna local DB
-studies.db

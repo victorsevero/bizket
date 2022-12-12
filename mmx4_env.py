@@ -13,7 +13,6 @@ class Mmx4Env(gym.Env):
         1: "right",
         2: "cross",
         3: "square",
-        4: "circle",
     }
 
     def __init__(self, port=6969, time=600):
@@ -24,7 +23,7 @@ class Mmx4Env(gym.Env):
             dtype=np.uint8,
         )
 
-        self.action_space = spaces.MultiBinary(5)
+        self.action_space = spaces.MultiBinary(4)
 
         self.server = Server(port=port)
         self._process = start_emulator(port)

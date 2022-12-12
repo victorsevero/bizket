@@ -15,7 +15,7 @@ def start_emulator(port=6969):
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
             r"--config=C:\Users\victo\Documents\bizket\emulators_configs\config.ini",
             # r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy_config.ini",
-            "--load-slot=0",
+            "--load-slot=1",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
         ]

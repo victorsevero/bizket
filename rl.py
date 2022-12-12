@@ -11,6 +11,7 @@ from stable_baselines3.common.vec_env import (
 from stable_baselines3.common.callbacks import (
     CheckpointCallback,
 )
+from torch import nn
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
@@ -85,6 +86,14 @@ def config_parser(config):
         value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
         config["model_kwargs"]["clip_range"] = linear_schedule(value)
 
+    if "policy_kwargs" in config["model_kwargs"].keys():
+        config["model_kwargs"]["policy_kwargs"]["activation_fn"] = {
+            "tanh": nn.Tanh,
+            "relu": nn.ReLU,
+            "elu": nn.ELU,
+            "leaky_relu": nn.LeakyReLU,
+        }[config["model_kwargs"]["policy_kwargs"]["activation_fn"]]
+
     return config
 
 
@@ -95,10 +104,13 @@ def train_model(config):
     if os.path.exists(f"models/{config['model_name']}.zip"):
         model = Model.load(f"models/{config['model_name']}", env=env)
         reset_num_timesteps = False
+    elif config["past_model"] is not None:
+        model = Model.load(f"models/{config['past_model']}", env=env)
+        reset_num_timesteps = True
     else:
         model = Model(
             env=env,
-            tensorboard_log="mmx4_logs/",
+            tensorboard_log="logs/mmx4/",
             verbose=0,
             seed=666,
             device="auto",
@@ -117,7 +129,8 @@ def train_model(config):
     model.learn(
         tb_log_name=config["model_name"],
         reset_num_timesteps=reset_num_timesteps,
-        callback=[ModelArchCallback(), checkpoint_callback],
+        # callback=[ModelArchCallback(), checkpoint_callback],
+        callback=[checkpoint_callback],
         progress_bar=True,
         **config["learn_kwargs"],
     )
@@ -125,7 +138,7 @@ def train_model(config):
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero.yml") as fp:
+    with open("models_configs/zero_zoo_cr.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
 

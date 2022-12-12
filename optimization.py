@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 import optuna
 from optuna.visualization import plot_optimization_history
@@ -17,11 +19,11 @@ def sample_ppo_params(trial: optuna.Trial):
     """
     n_steps = trial.suggest_categorical(
         "n_steps",
-        [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+        [32, 64, 128, 256, 512, 1024, 2048, 4096],
     )
     batch_size = trial.suggest_categorical(
         "batch_size",
-        [8, 16, 32, 64, 128, 256, 512],
+        [32, 64, 128, 256, 512],
     )
 
     if (config["env"]["n_envs"] * n_steps) % batch_size > 0:
@@ -93,12 +95,12 @@ def optimize_agent(trial):
     model = PPO(
         policy="CnnPolicy",
         env=env,
-        tensorboard_log="opt_logs/",
-        verbose=1,
+        tensorboard_log="logs/optim",
+        verbose=0,
         seed=666,
         **model_params,
     )
-    model.learn(100_000, log_interval=1)
+    model.learn(150_000, log_interval=1)
     reward, _ = evaluate_policy(
         model,
         eval_env,
@@ -117,9 +119,13 @@ if __name__ == "__main__":
     eval_env = env_setup(config["env"], default_port=6977, evaluating=True)
 
     name = "ppo"
+
+    db_path = "studies/z0.db"
+    Path(db_path).touch(exist_ok=True)
+
     study = optuna.create_study(
         study_name=name,
-        storage="sqlite:///studies.db",
+        storage=f"sqlite:///{db_path}",
         direction="maximize",
         load_if_exists=True,
     )
@@ -135,7 +141,15 @@ if __name__ == "__main__":
             show_progress_bar=True,
         )
 
-        with open(f"{name}_opt_params.yml", "w") as fp:
+        best_params = study.best_params
+        best_params["policy_kwargs"] = {
+            "activation_fn": best_params["activation_fn"],
+            "ortho_init": best_params["ortho_init"],
+        }
+        best_params.pop("activation_fn")
+        best_params.pop("ortho_init")
+
+        with open(f"{name}_opt.yml", "w") as fp:
             yaml.safe_dump(study.best_params, fp)
     finally:
         fig = plot_optimization_history(study)

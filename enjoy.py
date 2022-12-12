@@ -12,7 +12,7 @@ def enjoy(config):
 
     # model = Model.load(f"models/{config['model_name']}", env=env)
 
-    model = Model.load("checkpoints\z1_ppo_zoo_6000768_steps", env=env)
+    model = Model.load("checkpoints\z1_ppo_zoo\model_9000000_steps", env=env)
 
     # for i in range(500_000, 10_500_000, 500_000):
     # model = Model.load(
@@ -20,17 +20,18 @@ def enjoy(config):
     #     env=env,
     # )
 
-    reward = evaluate_policy(
+    rewards, lengths = evaluate_policy(
         model=model,
         env=env,
         n_eval_episodes=1,
         deterministic=True,
+        return_episode_rewards=True,
     )
-    print(f"Reward: {reward}")
+    print(f"Episode length: {lengths[0]}; Episode reward: {rewards[0]}")
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero.yml") as fp:
+    with open("models_configs/zero_zoo.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
     enjoy(config)
