@@ -10,9 +10,11 @@ def enjoy(config):
 
     Model = config["model"]
 
-    # model = Model.load(f"models/{config['model_name']}", env=env)
+    model = Model.load(f"models/{config['model_name']}", env=env)
 
-    model = Model.load("checkpoints\z1_ppo_zoo\model_9000000_steps", env=env)
+    # model = Model.load(
+    #     "checkpoints\z1_ppo_zoo\z1_ppo_zoo_6000768_steps", env=env
+    # )
 
     # for i in range(500_000, 10_500_000, 500_000):
     # model = Model.load(
@@ -31,7 +33,7 @@ def enjoy(config):
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero_zoo.yml") as fp:
+    with open("models_configs/zero_opt.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
     enjoy(config)

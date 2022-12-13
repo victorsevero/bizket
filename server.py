@@ -3,7 +3,7 @@ from io import BytesIO
 from typing import Dict
 
 import numpy as np
-from PIL import Image
+import cv2
 
 
 class Server:
@@ -67,9 +67,10 @@ class Server:
 
     @staticmethod
     def _decode_img(data: bytes):
-        im = Image.open(BytesIO(data)).crop((18, 0, 338, 240))
-        im = im.convert("RGB").resize((84, 84))
-        arr = np.array(im.convert("L"))
+        arr = np.frombuffer(data, np.uint8)
+        arr = cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
+        arr = arr[:, 18:338]
+        arr = cv2.resize(arr, (84, 84), interpolation=cv2.INTER_NEAREST)
         return np.expand_dims(arr, axis=2)
 
     def send_msg(self, msg: str):

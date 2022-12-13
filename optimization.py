@@ -95,12 +95,12 @@ def optimize_agent(trial):
     model = PPO(
         policy="CnnPolicy",
         env=env,
-        tensorboard_log="logs/optim",
+        tensorboard_log="logs/z1_optimization",
         verbose=0,
         seed=666,
         **model_params,
     )
-    model.learn(150_000, log_interval=1)
+    model.learn(100_000, log_interval=1)
     reward, _ = evaluate_policy(
         model,
         eval_env,
@@ -112,7 +112,7 @@ def optimize_agent(trial):
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero.yml") as fp:
+    with open("models_configs/zero_zoo.yml") as fp:
         config = yaml.safe_load(fp)
 
     env = env_setup(config["env"])
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     name = "ppo"
 
-    db_path = "studies/z0.db"
+    db_path = "studies/z1.db"
     Path(db_path).touch(exist_ok=True)
 
     study = optuna.create_study(

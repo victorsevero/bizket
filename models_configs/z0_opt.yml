@@ -1,7 +1,8 @@
 ---
-model_name: z1_ppo_opt
+model_name: z0_ppo_opt
+past_model: null
 model: PPO
-save_freq: 500_000
+save_freq: 100_000
 env:
   n_envs: 8
   n_stack: 3
@@ -21,5 +22,5 @@ model_kwargs:
     activation_fn: leaky_relu
     ortho_init: false
 learn_kwargs:
-  total_timesteps: 1_000_000
+  total_timesteps: 300_000
   log_interval: 1

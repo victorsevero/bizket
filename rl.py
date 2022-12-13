@@ -11,6 +11,7 @@ from stable_baselines3.common.vec_env import (
 from stable_baselines3.common.callbacks import (
     CheckpointCallback,
 )
+from stable_baselines3.common.evaluation import evaluate_policy
 from torch import nn
 
 from emulator_grid import set_emulator_grid
@@ -136,9 +137,18 @@ def train_model(config):
     )
     model.save(f"models/{config['model_name']}")
 
+    rewards, lengths = evaluate_policy(
+        model=model,
+        env=env,
+        n_eval_episodes=1,
+        deterministic=True,
+        return_episode_rewards=True,
+    )
+    print(f"Episode length: {lengths[0]}; Episode reward: {rewards[0]}")
+
 
 if __name__ == "__main__":
-    with open("models_configs/zero_zoo_cr.yml") as fp:
+    with open("models_configs/zero_opt.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
 

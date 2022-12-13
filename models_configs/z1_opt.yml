@@ -1,0 +1,26 @@
+---
+model_name: z1_opt
+past_model: null
+model: PPO
+save_freq: 500_000
+env:
+  n_envs: 8
+  n_stack: 3
+model_kwargs:
+  policy: CnnPolicy
+  n_steps: 512
+  n_epochs: 10
+  batch_size: 32
+  learning_rate: 2.0e-4
+  gamma: 0.98
+  gae_lambda: 0.92
+  clip_range: 0.2
+  vf_coef: 0.975
+  max_grad_norm: 2
+  ent_coef: 3.0e-3
+  policy_kwargs:
+    activation_fn: elu
+    ortho_init: true
+learn_kwargs:
+  total_timesteps: 10_000_000
+  log_interval: 1
