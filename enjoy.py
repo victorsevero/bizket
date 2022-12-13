@@ -6,7 +6,7 @@ from rl import config_parser, env_setup
 
 def enjoy(config):
     config["env"]["n_envs"] = 1
-    env = env_setup(config["env"])
+    env = env_setup(config["env"], enjoy=True)
 
     Model = config["model"]
 
@@ -33,7 +33,7 @@ def enjoy(config):
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero_opt.yml") as fp:
+    with open("models_configs/z1_opt.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
     enjoy(config)

@@ -15,7 +15,7 @@ class Mmx4Env(gym.Env):
         3: "square",
     }
 
-    def __init__(self, port=6969, time=600):
+    def __init__(self, port=6969, time=600, enjoy=False):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
@@ -26,7 +26,7 @@ class Mmx4Env(gym.Env):
         self.action_space = spaces.MultiBinary(4)
 
         self.server = Server(port=port)
-        self._process = start_emulator(port)
+        self._process = start_emulator(port, enjoy=enjoy)
         self.server.accept_connection()
 
         self.max_steps = 60 // 6 * time

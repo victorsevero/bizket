@@ -9,12 +9,15 @@ SIZE_X = SCREEN_X // 4
 SIZE_Y = 3 * SIZE_X // 4
 
 
-def start_emulator(port=6969):
+def start_emulator(port=6969, enjoy=False):
+    if enjoy:
+        ini_file = r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy_config.ini"
+    else:
+        ini_file = r"--config=C:\Users\victo\Documents\bizket\emulators_configs\config.ini"
     return subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
-            r"--config=C:\Users\victo\Documents\bizket\emulators_configs\config.ini",
-            # r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy_config.ini",
+            ini_file,
             "--load-slot=1",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",

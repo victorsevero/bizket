@@ -19,22 +19,19 @@ from mmx4_env import Mmx4Env
 from callbacks import ModelArchCallback
 
 
-def make_mmx4_env(port):
+def make_mmx4_env(port, enjoy=False):
     def _init():
-        env = Mmx4Env(port)
+        env = Mmx4Env(port, enjoy=enjoy)
         return env
 
     return _init
 
 
-def env_setup(env_config, default_port=6969, evaluating=False):
+def env_setup(env_config, default_port=6969, enjoy=False):
     n_envs = env_config["n_envs"]
     n_stack = env_config["n_stack"]
 
-    if not evaluating:
-        env_fns = [make_mmx4_env(default_port + i) for i in range(n_envs)]
-    else:
-        env_fns = [make_mmx4_env(default_port)]
+    env_fns = [make_mmx4_env(default_port + i, enjoy) for i in range(n_envs)]
 
     env = VecMonitor(
         VecFrameStack(
@@ -45,10 +42,7 @@ def env_setup(env_config, default_port=6969, evaluating=False):
         )
     )
 
-    if not evaluating:
-        set_emulator_grid(n_envs)
-    else:
-        set_emulator_grid(n_envs + 1)
+    set_emulator_grid(n_envs)
 
     return env
 
