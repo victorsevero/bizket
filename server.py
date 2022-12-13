@@ -14,9 +14,6 @@ class Server:
         "cross": "x",
         "square": "s",
         "circle": "o",
-        "load": "load",
-        "close": "close",
-        "ok": "ok",
     }
 
     def __init__(self, ip="localhost", port=6969):
@@ -78,7 +75,7 @@ class Server:
             joined_msg = "".join([self.ACTIONS_MAP[x] for x in msg])
             encoded_msg = self._encode_msg(joined_msg)
         else:
-            encoded_msg = self._encode_msg(self.ACTIONS_MAP[msg])
+            encoded_msg = self._encode_msg(self.ACTIONS_MAP.get(msg, msg))
         self._connection.sendall(encoded_msg)
 
     @staticmethod
@@ -91,10 +88,10 @@ class Server:
     def close(self):
         self._connection.close()
 
-    def load_state(self, need_msg: bool = True):
+    def load_state(self, state: int, need_msg: bool = True):
         if need_msg:
             self.get_msg()
-        self.send_msg("load")
+        self.send_msg(f"load{state}")
 
 
 if __name__ == "__main__":

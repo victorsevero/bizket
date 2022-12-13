@@ -9,7 +9,7 @@ SIZE_X = SCREEN_X // 4
 SIZE_Y = 3 * SIZE_X // 4
 
 
-def start_emulator(port=6969, enjoy=False):
+def start_emulator(boss=0, port=6969, enjoy=False):
     if enjoy:
         ini_file = r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy_config.ini"
     else:
@@ -18,7 +18,7 @@ def start_emulator(port=6969, enjoy=False):
         [
             r"C:\Users\victo\Documents\BizHawk\EmuHawk.exe",
             ini_file,
-            "--load-slot=1",
+            f"--load-slot={boss}",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
         ]

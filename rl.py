@@ -19,9 +19,9 @@ from mmx4_env import Mmx4Env
 from callbacks import ModelArchCallback
 
 
-def make_mmx4_env(port, enjoy=False):
+def make_mmx4_env(boss, port, enjoy=False):
     def _init():
-        env = Mmx4Env(port, enjoy=enjoy)
+        env = Mmx4Env(boss, port, enjoy=enjoy)
         return env
 
     return _init
@@ -30,8 +30,11 @@ def make_mmx4_env(port, enjoy=False):
 def env_setup(env_config, default_port=6969, enjoy=False):
     n_envs = env_config["n_envs"]
     n_stack = env_config["n_stack"]
+    boss = env_config["boss"]
 
-    env_fns = [make_mmx4_env(default_port + i, enjoy) for i in range(n_envs)]
+    env_fns = [
+        make_mmx4_env(boss, default_port + i, enjoy) for i in range(n_envs)
+    ]
 
     env = VecMonitor(
         VecFrameStack(

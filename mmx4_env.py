@@ -15,7 +15,7 @@ class Mmx4Env(gym.Env):
         3: "square",
     }
 
-    def __init__(self, port=6969, time=600, enjoy=False):
+    def __init__(self, boss, port=6969, time=600, enjoy=False):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
@@ -26,12 +26,14 @@ class Mmx4Env(gym.Env):
         self.action_space = spaces.MultiBinary(4)
 
         self.server = Server(port=port)
-        self._process = start_emulator(port, enjoy=enjoy)
+        self._process = start_emulator(boss=boss, port=port, enjoy=enjoy)
         self.server.accept_connection()
 
         self.max_steps = 60 // 6 * time
         self.frame = 0
         self.first_load = True
+
+        self.boss = boss
 
     def _get_obs(self):
         return self._screen_matrix
@@ -41,7 +43,7 @@ class Mmx4Env(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.frame = 0
-        self.server.load_state(self.first_load)
+        self.server.load_state(self.boss, self.first_load)
         if self.first_load:
             self.first_load = False
 
@@ -95,6 +97,6 @@ class Mmx4Env(gym.Env):
 
 
 if __name__ == "__main__":
-    env = Mmx4Env(port=6969)
+    env = Mmx4Env(boss=0, port=6969)
     check_env(env)
     print("Environment passed the check")

@@ -4,6 +4,7 @@ past_model: null
 model: PPO
 save_freq: 500_000
 env:
+  boss: 1
   n_envs: 8
   n_stack: 3
 model_kwargs:

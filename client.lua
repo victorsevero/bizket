@@ -74,8 +74,8 @@ while true do
     local msg = get_msg()
     comm.socketServerSend(msg)
     local response = comm.socketServerScreenShotResponse()
-    if response == "load" then
-        savestate.loadslot(1)
+    if response:sub(1, 4) == "load" then
+        savestate.loadslot(tonumber(response:sub(-1)))
         disable_hud()
     elseif response == "close" then
         client.exit()
