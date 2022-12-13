@@ -8,7 +8,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 
 
-from rl import env_setup, linear_schedule
+from rl import env_setup
 
 
 def sample_ppo_params(trial: optuna.Trial):
@@ -34,10 +34,6 @@ def sample_ppo_params(trial: optuna.Trial):
         [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999],
     )
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
-    lr_schedule = trial.suggest_categorical(
-        "lr_schedule",
-        ["linear", "constant"],
-    )
     ent_coef = trial.suggest_float("ent_coef", 1e-8, 0.1, log=True)
     clip_range = trial.suggest_categorical("clip_range", [0.1, 0.2, 0.3, 0.4])
     n_epochs = trial.suggest_categorical("n_epochs", [1, 5, 10, 20])
@@ -55,9 +51,6 @@ def sample_ppo_params(trial: optuna.Trial):
         "activation_fn",
         ["tanh", "relu", "elu", "leaky_relu"],
     )
-
-    if lr_schedule == "linear":
-        learning_rate = linear_schedule(learning_rate)
 
     activation_fn = {
         "tanh": nn.Tanh,
@@ -89,7 +82,6 @@ def optimize_agent(trial):
     Optuna maximises the negative log likelihood, so we
     need to negate the reward here
     """
-    global env, eval_env
     model_params = sample_ppo_params(trial)
 
     model = PPO(
@@ -103,7 +95,7 @@ def optimize_agent(trial):
     model.learn(100_000, log_interval=1)
     reward, _ = evaluate_policy(
         model,
-        eval_env,
+        env,
         n_eval_episodes=1,
         deterministic=True,
     )
@@ -112,12 +104,10 @@ def optimize_agent(trial):
 
 
 if __name__ == "__main__":
-    with open("models_configs/zero_zoo.yml") as fp:
+    with open("models_configs/z1_opt.yml") as fp:
         config = yaml.safe_load(fp)
 
     env = env_setup(config["env"])
-    eval_env = env_setup(config["env"], default_port=6977, evaluating=True)
-
     name = "ppo"
 
     db_path = "studies/z1.db"
