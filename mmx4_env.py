@@ -8,11 +8,14 @@ from emulator_grid import start_emulator
 
 
 class Mmx4Env(gym.Env):
+    ARROW_TO_BUTTON = {
+        0: None,
+        1: "left",
+        2: "right",
+    }
     ACTION_TO_BUTTON = {
-        0: "left",
-        1: "right",
-        2: "cross",
-        3: "square",
+        1: "cross",
+        2: "square",
     }
 
     def __init__(self, boss, port=6969, time=600, enjoy=False):
@@ -23,7 +26,7 @@ class Mmx4Env(gym.Env):
             dtype=np.uint8,
         )
 
-        self.action_space = spaces.MultiBinary(4)
+        self.action_space = spaces.MultiDiscrete([3, 2, 2])
 
         self.server = Server(port=port)
         self._process = start_emulator(boss=boss, port=port, enjoy=enjoy)
@@ -88,8 +91,13 @@ class Mmx4Env(gym.Env):
 
     def _actions_to_buttons(self, action):
         buttons = [
-            self.ACTION_TO_BUTTON[i] for i, act in enumerate(action) if act
+            self.ACTION_TO_BUTTON[i]
+            for i, act in enumerate(action[1:], start=1)
+            if act
         ]
+        arrow = self.ARROW_TO_BUTTON[action[0]]
+        if arrow is not None:
+            buttons.append(arrow)
         if not buttons:
             buttons = ["nothing"]
 
