@@ -1,5 +1,5 @@
 ---
-model_name: x0_ppo_zoo
+model_name: z1_zoo
 model: PPO
 save_freq: 500_000
 env:

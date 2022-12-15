@@ -1,11 +1,3 @@
-PSX_WIDTH = 320
-PSX_HEIGHT = 240
-BORDER_WIDTH = 84
-BORDER_HEIGHT = 0
-SCREEN_WIDTH = client.bufferwidth() - 2 * BORDER_WIDTH
-SCREEN_HEIGHT = client.bufferheight() - BORDER_HEIGHT
-
-
 local get_player_hp = function()
     return bit.clear(mainmemory.read_u8(0x141924), 7)
 end
@@ -32,24 +24,24 @@ end
 
 local set_commands = function(commands)
     local buttons = {}
-    buttons.Left = false
-    buttons.Right = false
-    buttons.Cross = false
-    buttons.Circle = false
-    buttons.Square = false
+    buttons["D-Pad Left"] = false
+    buttons["D-Pad Right"] = false
+    buttons["X"] = false
+    buttons["○"] = false
+    buttons["□"] = false
 
     for i = 1, commands:len() do
         local c = commands:sub(i, i)
         if c == "l" then
-            buttons.Left = true
+            buttons["D-Pad Left"] = true
         elseif c == "r" then
-            buttons.Right = true
+            buttons["D-Pad Right"] = true
         elseif c == "x" then
-            buttons.Cross = true
+            buttons["X"] = true
         elseif c == "o" then
-            buttons.Circle = true
+            buttons["○"] = true
         elseif c == "s" then
-            buttons.Square = true
+            buttons["□"] = true
         end
     end
     joypad.set(buttons, 1)
@@ -63,7 +55,7 @@ local disable_hud = function()
     mainmemory.write_u8(0x1721DF, 0)
 end
 
-
+print(joypad.get(1))
 comm.socketServerSetTimeout(0)
 disable_hud()
 for _ = 1, 60 do

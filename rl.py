@@ -145,7 +145,7 @@ def train_model(config):
 
 
 if __name__ == "__main__":
-    with open("models_configs/z1_opt.yml") as fp:
+    with open("models_configs/z1_opt_ht.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
 

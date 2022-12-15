@@ -49,7 +49,9 @@ class Server:
         data = bytearray()
         while not data.endswith(b"IEND\xaeB`\x82"):
             data += self._connection.recv(4096)
-        screen_matrix = self._decode_img(bytes(data))
+        screen_matrix = self._decode_img(
+            bytes(data).split(b" ", maxsplit=1)[-1]
+        )
 
         return screen_matrix, data_dict["player_hp"], data_dict["boss_hp"]
 

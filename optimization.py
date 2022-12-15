@@ -23,7 +23,7 @@ def sample_ppo_params(trial: optuna.Trial):
     )
     batch_size = trial.suggest_categorical(
         "batch_size",
-        [32, 64, 128, 256, 512],
+        [16, 32, 64, 128, 256, 512],
     )
 
     if (config["env"]["n_envs"] * n_steps) % batch_size > 0:
