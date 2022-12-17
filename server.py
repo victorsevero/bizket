@@ -70,7 +70,7 @@ class Server:
         arr = cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
         arr = arr[:, 18:338]
         arr = cv2.resize(arr, (84, 84), interpolation=cv2.INTER_NEAREST)
-        return np.expand_dims(arr, axis=2)
+        return np.expand_dims(arr, axis=2).transpose(2, 0, 1)
 
     def send_msg(self, msg: str):
         if isinstance(msg, list):

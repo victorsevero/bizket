@@ -1,9 +1,11 @@
 ---
-model_name: z1_zoo
+model_name: z1_zoo_rew
+past_model: null
 model: PPO
 save_freq: 500_000
 env:
-  n_envs: 8
+  boss: 1
+  n_envs: 16
   n_stack: 3
 model_kwargs:
   policy: CnnPolicy

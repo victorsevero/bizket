@@ -24,6 +24,9 @@ end
 
 local set_commands = function(commands)
     local buttons = {}
+
+    -- Nymashock
+
     buttons["D-Pad Left"] = false
     buttons["D-Pad Right"] = false
     buttons["X"] = false
@@ -44,6 +47,29 @@ local set_commands = function(commands)
             buttons["□"] = true
         end
     end
+
+    -- Octoshock
+
+    -- buttons.Left = false
+    -- buttons.Right = false
+    -- buttons.Cross = false
+    -- buttons.Circle = false
+    -- buttons.Square = false
+
+    -- for i = 1, commands:len() do
+    --     local c = commands:sub(i, i)
+    --     if c == "l" then
+    --         buttons.Left = true
+    --     elseif c == "r" then
+    --         buttons.Right = true
+    --     elseif c == "x" then
+    --         buttons.Cross = true
+    --     elseif c == "o" then
+    --         buttons.Circle = true
+    --     elseif c == "s" then
+    --         buttons.Square = true
+    --     end
+    -- end
     joypad.set(buttons, 1)
 end
 
@@ -55,7 +81,6 @@ local disable_hud = function()
     mainmemory.write_u8(0x1721DF, 0)
 end
 
-print(joypad.get(1))
 comm.socketServerSetTimeout(0)
 disable_hud()
 for _ = 1, 60 do

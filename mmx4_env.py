@@ -22,7 +22,7 @@ class Mmx4Env(gym.Env):
         self.observation_space = spaces.Box(
             low=0,
             high=255,
-            shape=(84, 84, 1),
+            shape=(1, 84, 84),
             dtype=np.uint8,
         )
 
@@ -42,7 +42,11 @@ class Mmx4Env(gym.Env):
         return self._screen_matrix
 
     def _get_info(self):
-        return {"player_hp": self._player_hp, "boss_hp": self._boss_hp}
+        return {
+            "player_hp": self._player_hp,
+            "boss_hp": self._boss_hp,
+            "is_success": not self._boss_hp,
+        }
 
     def reset(self, seed=None, options=None):
         self.frame = 0
@@ -76,8 +80,8 @@ class Mmx4Env(gym.Env):
         self.frame += 1
 
         terminated = not (self._player_hp and self._boss_hp)
-        boss_dmg = (past_boss_hp - self._boss_hp) / 48
-        player_dmg = (past_player_hp - self._player_hp) / 32
+        boss_dmg = past_boss_hp - self._boss_hp
+        player_dmg = past_player_hp - self._player_hp
         reward = boss_dmg - player_dmg
 
         truncated = self.frame >= self.max_steps

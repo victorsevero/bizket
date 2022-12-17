@@ -23,3 +23,14 @@ class ModelArchCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         return True
+
+
+class DeltaHpCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super(DeltaHpCallback, self).__init__(verbose)
+
+    def _on_step(self) -> bool:
+        return True
+
+    def _on_rollout_end(self) -> None:
+        self.training_env.info

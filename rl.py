@@ -4,10 +4,10 @@ import yaml
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import (
     SubprocVecEnv,
-    VecTransposeImage,
     VecFrameStack,
     VecMonitor,
 )
+from stable_baselines3.common.atari_wrappers import ClipRewardEnv
 from stable_baselines3.common.callbacks import (
     CheckpointCallback,
 )
@@ -16,12 +16,13 @@ from torch import nn
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
-from callbacks import ModelArchCallback
+from callbacks import ModelArchCallback, DeltaHpCallback
 
 
 def make_mmx4_env(boss, port, enjoy=False):
     def _init():
-        env = Mmx4Env(boss, port, enjoy=enjoy)
+        env = ClipRewardEnv(Mmx4Env(boss, port, enjoy=enjoy))
+        # env = Mmx4Env(boss, port, enjoy=enjoy)
         return env
 
     return _init
@@ -38,11 +39,11 @@ def env_setup(env_config, default_port=6969, enjoy=False):
 
     env = VecMonitor(
         VecFrameStack(
-            VecTransposeImage(
-                SubprocVecEnv(env_fns),
-            ),
+            SubprocVecEnv(env_fns),
             n_stack=n_stack,
-        )
+            channels_order="first",
+        ),
+        # info_keywords=("is_success", "player_hp", "boss_hp"),
     )
 
     set_emulator_grid(n_envs)
@@ -84,7 +85,10 @@ def config_parser(config):
         value = float(config["model_kwargs"]["clip_range"].split("_")[-1])
         config["model_kwargs"]["clip_range"] = linear_schedule(value)
 
-    if "policy_kwargs" in config["model_kwargs"].keys():
+    if (
+        "activation_fn"
+        in config["model_kwargs"].get("policy_kwargs", {}).keys()
+    ):
         config["model_kwargs"]["policy_kwargs"]["activation_fn"] = {
             "tanh": nn.Tanh,
             "relu": nn.ReLU,
@@ -129,6 +133,7 @@ def train_model(config):
         reset_num_timesteps=reset_num_timesteps,
         # callback=[ModelArchCallback(), checkpoint_callback],
         callback=[checkpoint_callback],
+        # callback=[checkpoint_callback, DeltaHpCallback()],
         progress_bar=True,
         **config["learn_kwargs"],
     )
@@ -143,9 +148,11 @@ def train_model(config):
     )
     print(f"Episode length: {lengths[0]}; Episode reward: {rewards[0]}")
 
+    env.close()
+
 
 if __name__ == "__main__":
-    with open("models_configs/z1_opt_ht.yml") as fp:
+    with open("models_configs/sevs.yml") as fp:
         config = yaml.safe_load(fp)
     config = config_parser(config)
 
