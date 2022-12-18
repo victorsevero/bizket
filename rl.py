@@ -16,13 +16,12 @@ from torch import nn
 
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
-from callbacks import ModelArchCallback, DeltaHpCallback
+from callbacks import HpLoggerCallback
 
 
 def make_mmx4_env(boss, port, enjoy=False):
     def _init():
         env = ClipRewardEnv(Mmx4Env(boss, port, enjoy=enjoy))
-        # env = Mmx4Env(boss, port, enjoy=enjoy)
         return env
 
     return _init
@@ -43,7 +42,7 @@ def env_setup(env_config, default_port=6969, enjoy=False):
             n_stack=n_stack,
             channels_order="first",
         ),
-        # info_keywords=("is_success", "player_hp", "boss_hp"),
+        info_keywords=("player_hp", "boss_hp"),
     )
 
     set_emulator_grid(n_envs)
@@ -131,9 +130,7 @@ def train_model(config):
     model.learn(
         tb_log_name=config["model_name"],
         reset_num_timesteps=reset_num_timesteps,
-        # callback=[ModelArchCallback(), checkpoint_callback],
-        callback=[checkpoint_callback],
-        # callback=[checkpoint_callback, DeltaHpCallback()],
+        callback=[checkpoint_callback, HpLoggerCallback()],
         progress_bar=True,
         **config["learn_kwargs"],
     )

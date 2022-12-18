@@ -43,9 +43,8 @@ class Mmx4Env(gym.Env):
 
     def _get_info(self):
         return {
-            "player_hp": self._player_hp,
-            "boss_hp": self._boss_hp,
-            "is_success": not self._boss_hp,
+            "player_hp": self.player_hp,
+            "boss_hp": self.boss_hp,
         }
 
     def reset(self, seed=None, options=None):
@@ -56,8 +55,8 @@ class Mmx4Env(gym.Env):
 
         (
             self._screen_matrix,
-            self._player_hp,
-            self._boss_hp,
+            self.player_hp,
+            self.boss_hp,
         ) = self.server.get_msg()
 
         observation = self._get_obs()
@@ -66,22 +65,22 @@ class Mmx4Env(gym.Env):
         return observation, info
 
     def step(self, action):
-        past_player_hp = self._player_hp
-        past_boss_hp = self._boss_hp
+        past_player_hp = self.player_hp
+        past_boss_hp = self.boss_hp
 
         self.server.send_msg(self._actions_to_buttons(action))
 
         (
             self._screen_matrix,
-            self._player_hp,
-            self._boss_hp,
+            self.player_hp,
+            self.boss_hp,
         ) = self.server.get_msg()
 
         self.frame += 1
 
-        terminated = not (self._player_hp and self._boss_hp)
-        boss_dmg = past_boss_hp - self._boss_hp
-        player_dmg = past_player_hp - self._player_hp
+        terminated = not (self.player_hp and self.boss_hp)
+        boss_dmg = past_boss_hp - self.boss_hp
+        player_dmg = past_player_hp - self.player_hp
         reward = boss_dmg - player_dmg
 
         truncated = self.frame >= self.max_steps

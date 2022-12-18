@@ -1868,7 +1868,7 @@ tests = ["black", "flake8 (>=3.8)", "flake8-bugbear", "isort (>=5.0)", "mypy", "
 type = "git"
 url = "https://github.com/carlosluis/stable-baselines3"
 reference = "fix_tests"
-resolved_reference = "08a4712d36f1ca562971efe5329ef3ea643c53c4"
+resolved_reference = "93c86f2bbf7c177273bc9b9ee22d81ef1dcf1d4a"
 
 [[package]]
 name = "stack-data"

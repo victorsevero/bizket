@@ -1,16 +1,15 @@
 ---
-model_name: test
+model_name: z1_sevs
 past_model: null
 model: PPO
 save_freq: 500_000
 env:
-  boss: 0
+  boss: 1
   n_envs: 16
   n_stack: 5
 model_kwargs:
   policy: CnnPolicy
-  # learning_rate: lin_2.5e-4
-  learning_rate: 2.0e-4
+  learning_rate: lin_2.5e-4
   n_steps: 128
   batch_size: 512
   n_epochs: 4
@@ -30,5 +29,5 @@ model_kwargs:
     optimizer_kwargs:
       eps: 1.0e-7
 learn_kwargs:
-  total_timesteps: 300_000
+  total_timesteps: 10_000_000
   log_interval: 1

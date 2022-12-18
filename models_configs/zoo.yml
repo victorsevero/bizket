@@ -1,5 +1,5 @@
 ---
-model_name: z1_zoo_rew
+model_name: z1_zoo
 past_model: null
 model: PPO
 save_freq: 500_000

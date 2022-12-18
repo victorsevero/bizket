@@ -31,7 +31,7 @@ def sample_ppo_params(trial: optuna.Trial):
 
     gamma = trial.suggest_categorical(
         "gamma",
-        [0.9, 0.95, 0.98, 0.99, 0.995, 0.999, 0.9999],
+        [0.9, 0.95, 0.98, 0.99, 0.995, 0.999],
     )
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1, log=True)
     ent_coef = trial.suggest_float("ent_coef", 1e-8, 0.1, log=True)
