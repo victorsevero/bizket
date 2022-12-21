@@ -25,49 +25,24 @@ end
 local set_commands = function(commands)
     local buttons = {}
 
-    -- Nymashock
-
-    -- buttons["D-Pad Left"] = false
-    -- buttons["D-Pad Right"] = false
-    -- buttons["X"] = false
-    -- buttons["○"] = false
-    -- buttons["□"] = false
-
-    -- for i = 1, commands:len() do
-    --     local c = commands:sub(i, i)
-    --     if c == "l" then
-    --         buttons["D-Pad Left"] = true
-    --     elseif c == "r" then
-    --         buttons["D-Pad Right"] = true
-    --     elseif c == "x" then
-    --         buttons["X"] = true
-    --     elseif c == "o" then
-    --         buttons["○"] = true
-    --     elseif c == "s" then
-    --         buttons["□"] = true
-    --     end
-    -- end
-
-    -- Octoshock
-
-    buttons.Left = false
-    buttons.Right = false
-    buttons.Cross = false
-    buttons.Circle = false
-    buttons.Square = false
+    buttons["D-Pad Left"] = false
+    buttons["D-Pad Right"] = false
+    buttons["X"] = false
+    buttons["○"] = false
+    buttons["□"] = false
 
     for i = 1, commands:len() do
         local c = commands:sub(i, i)
         if c == "l" then
-            buttons.Left = true
+            buttons["D-Pad Left"] = true
         elseif c == "r" then
-            buttons.Right = true
+            buttons["D-Pad Right"] = true
         elseif c == "x" then
-            buttons.Cross = true
+            buttons["X"] = true
         elseif c == "o" then
-            buttons.Circle = true
+            buttons["○"] = true
         elseif c == "s" then
-            buttons.Square = true
+            buttons["□"] = true
         end
     end
 

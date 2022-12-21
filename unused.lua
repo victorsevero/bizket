@@ -121,3 +121,26 @@ local palette_search_cycle = function()
         i = 0
     end
 end
+
+-- Octoshock
+
+-- buttons.Left = false
+-- buttons.Right = false
+-- buttons.Cross = false
+-- buttons.Circle = false
+-- buttons.Square = false
+
+-- for i = 1, commands:len() do
+--     local c = commands:sub(i, i)
+--     if c == "l" then
+--         buttons.Left = true
+--     elseif c == "r" then
+--         buttons.Right = true
+--     elseif c == "x" then
+--         buttons.Cross = true
+--     elseif c == "o" then
+--         buttons.Circle = true
+--     elseif c == "s" then
+--         buttons.Square = true
+--     end
+-- end

@@ -1,19 +1,24 @@
 import os
-import json
+from copy import copy
 
+import yaml
 import numpy as np
 import torch
 from torch import nn
-from stable_baselines3 import A2C, PPO, DQN
+from stable_baselines3 import PPO
 from torchvision import utils
 import matplotlib.pyplot as plt
 from tqdm import trange
 
+from rl import config_parser
+
+
+FRAMESTACK_NUMBER = 5
 
 torch.autograd.set_grad_enabled(True)
 
 
-def make_layer_grid(model, out_size, layer_idx, single_channel=True):
+def make_layer_grid(model, out_size, layer_idx, channel=-1):
     n_rows, n_cols = get_grid_shape(out_size)
 
     plt.figure(figsize=(32, 18))
@@ -21,16 +26,13 @@ def make_layer_grid(model, out_size, layer_idx, single_channel=True):
         img_arr = gradient_ascent(model, i, loop_range=100)
 
         plt.subplot(n_rows, n_cols, i + 1)
-        if single_channel:
-            plt.imshow(
-                img_arr[..., 2],
-                cmap="gray",
-                vmin=0,
-                vmax=255,
-                interpolation="none",
-            )
-        else:
-            plt.imshow(img_arr, interpolation="none")
+        plt.imshow(
+            img_arr[..., channel],
+            cmap="gray",
+            vmin=0,
+            vmax=255,
+            interpolation="none",
+        )
         plt.title(f"Filter #{i}")
         plt.axis("off")
     plt.suptitle(f"Layer {layer_idx}", fontsize=20)
@@ -38,8 +40,11 @@ def make_layer_grid(model, out_size, layer_idx, single_channel=True):
     plt.tight_layout(h_pad=h_pad, rect=[0, 0, 1, 0.97])
 
     global model_name
-    sub_dir = "single_channel" if single_channel else "multi_channel"
-    layers_dir = f"layers_activations/{model_name}/{sub_dir}"
+    if channel >= 0:
+        idx = copy(channel)
+    else:
+        idx = FRAMESTACK_NUMBER + channel
+    layers_dir = f"layers_activations/{model_name}_channel{idx}"
     os.makedirs(layers_dir, exist_ok=True)
     path = f"{layers_dir}/layer_{layer_idx}.png"
     plt.savefig(path)
@@ -86,7 +91,11 @@ def plot_weights(layer):
 
 
 def gradient_ascent(model, filter_index, loop_range=40, step=1):
-    input_data = torch.randn(1, 3, 128, 128, requires_grad=True, device="cuda")
+    input_data = torch.randn(
+        size=(1, FRAMESTACK_NUMBER, 84, 84),
+        requires_grad=True,
+        device="cuda",
+    )
 
     for _ in range(loop_range):
         loss_value, grads_value = iterate(model, filter_index, input_data)
@@ -116,35 +125,31 @@ def deprocess_image(x):
 
 
 if __name__ == "__main__":
-    with open("config_best.json") as fp:
-        config = json.load(fp)
+    with open("models_configs/sevs.yml") as fp:
+        config = yaml.safe_load(fp)
+    config = config_parser(config)
 
     model_name = config["model_name"]
 
-    if config["model"] == "A2C":
-        Model = A2C
-    elif config["model"] == "DQN":
-        Model = DQN
-    elif config["model"] == "PPO":
-        Model = PPO
+    Model: PPO = config["model"]
+    model = Model.load(f"models/{model_name}")
 
-    # model = Model.load(f"models/{model_name}")
-    model = Model.load(f"models\Ppo_zoo_3stk_fs6_hw84")
-
-    if (config["model"] == "A2C") or (config["model"] == "PPO"):
-        cnn = model.policy.features_extractor.cnn
-    elif config["model"] == "DQN":
-        cnn = model.policy.q_net.features_extractor.cnn
-    else:
-        raise ValueError(f"Invalid model {config['model']}")
+    cnn = model.policy.features_extractor.cnn
 
     for layer_idx, layer in enumerate(cnn, start=1):
         if isinstance(layer, nn.ReLU):
             model = cnn[:layer_idx]
             conv2d_idx = layer_idx - 2
-            make_layer_grid(
-                model=model,
-                out_size=model[conv2d_idx].out_channels,
-                layer_idx=conv2d_idx,
-                single_channel=False,
-            )
+            # make_layer_grid(
+            #     model=model,
+            #     out_size=model[conv2d_idx].out_channels,
+            #     layer_idx=conv2d_idx,
+            #     channel=-1,
+            # )
+            for channel in range(FRAMESTACK_NUMBER):
+                make_layer_grid(
+                    model=model,
+                    out_size=model[conv2d_idx].out_channels,
+                    layer_idx=conv2d_idx,
+                    channel=channel,
+                )

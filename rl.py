@@ -124,7 +124,6 @@ def train_model(config):
         save_freq=config["save_freq"] // config["env"]["n_envs"],
         save_path=f"checkpoints/{config['model_name']}/",
         name_prefix="model",
-        save_replay_buffer=True,
     )
 
     model.learn(

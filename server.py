@@ -16,7 +16,7 @@ class Server:
         "circle": "o",
     }
 
-    def __init__(self, ip="localhost", port=6969):
+    def __init__(self, ip="localhost", port=6969, img_size=(84, 84)):
         self.ip = ip
         self.port = port
 
@@ -26,6 +26,8 @@ class Server:
         print(f"Starting server on {self.ip}:{self.port}")
         self._socket.bind((self.ip, self.port))
         self._socket.listen()
+
+        self._img_size = img_size
 
     def accept_connection(self):
         self._connection, _ = self._socket.accept()
@@ -64,12 +66,12 @@ class Server:
 
         return data_dict
 
-    @staticmethod
-    def _decode_img(data: bytes):
+    def _decode_img(self, data: bytes):
         arr = np.frombuffer(data, np.uint8)
         arr = cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
-        arr = arr[:, 18:338]
-        arr = cv2.resize(arr, (84, 84), interpolation=cv2.INTER_NEAREST)
+        arr = arr[:, 18:-12]
+        # arr = arr[:, 86:-74]
+        arr = cv2.resize(arr, self._img_size, interpolation=cv2.INTER_NEAREST)
         return np.expand_dims(arr, axis=2).transpose(2, 0, 1)
 
     def send_msg(self, msg: str):

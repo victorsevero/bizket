@@ -1,4 +1,5 @@
 import yaml
+from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from rl import config_parser, env_setup
@@ -8,13 +9,15 @@ def enjoy(config):
     config["env"]["n_envs"] = 1
     env = env_setup(config["env"], enjoy=True)
 
-    Model = config["model"]
+    Model: PPO = config["model"]
+    model_name = config["model_name"]
 
-    model = Model.load(f"models/{config['model_name']}", env=env)
+    # model = Model.load(f"models/{config['model_name']}", env=env)
 
-    # model = Model.load(
-    #     "checkpoints\z1_ppo_zoo\z1_ppo_zoo_6000768_steps", env=env
-    # )
+    model = Model.load(
+        f"checkpoints/{model_name}/model_5000000_steps",
+        env=env,
+    )
 
     # for i in range(500_000, 10_500_000, 500_000):
     # model = Model.load(
