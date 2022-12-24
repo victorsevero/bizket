@@ -15,7 +15,7 @@ def enjoy(config):
     # model = Model.load(f"models/{config['model_name']}", env=env)
 
     model = Model.load(
-        f"checkpoints/{model_name}/model_5000000_steps",
+        f"checkpoints/{model_name}/model_2000000_steps",
         env=env,
     )
 

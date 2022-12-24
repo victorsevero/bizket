@@ -105,9 +105,6 @@ def train_model(config):
     if os.path.exists(f"models/{config['model_name']}.zip"):
         model = Model.load(f"models/{config['model_name']}", env=env)
         reset_num_timesteps = False
-    elif config["past_model"] is not None:
-        model = Model.load(f"models/{config['past_model']}", env=env)
-        reset_num_timesteps = True
     else:
         model = Model(
             env=env,

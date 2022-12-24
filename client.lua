@@ -4,6 +4,9 @@ end
 
 local get_boss_hp = function()
     return bit.clear(mainmemory.read_u8(0x13BF2C), 7)
+
+    -- slash beast
+    -- return bit.clear(mainmemory.read_u8(0x13BFC8), 7)
 end
 
 local make_msg = function(player_hp, boss_hp)
@@ -58,10 +61,6 @@ local disable_hud = function()
 end
 
 comm.socketServerSetTimeout(0)
-disable_hud()
-for _ = 1, 60 do
-    frameadvance()
-end
 
 while true do
     local msg = get_msg()
@@ -69,7 +68,8 @@ while true do
     local response = comm.socketServerScreenShotResponse()
     if response:sub(1, 4) == "load" then
         savestate.loadslot(tonumber(response:sub(-1)))
-        disable_hud()
+        -- disable_hud()
+        frameadvance()
     elseif response == "close" then
         client.exit()
     elseif response ~= "ok" then
