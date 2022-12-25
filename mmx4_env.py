@@ -16,6 +16,7 @@ class Mmx4Env(gym.Env):
     ACTION_TO_BUTTON = {
         1: "cross",
         2: "square",
+        3: "circle",
     }
 
     def __init__(
@@ -24,6 +25,7 @@ class Mmx4Env(gym.Env):
         port=6969,
         time=600,
         image_size=(84, 84),
+        allow_circle=False,
         enjoy=False,
     ):
 
@@ -34,7 +36,10 @@ class Mmx4Env(gym.Env):
             dtype=np.uint8,
         )
 
-        self.action_space = spaces.MultiDiscrete([3, 2, 2])
+        if allow_circle:
+            self.action_space = spaces.MultiDiscrete([3, 2, 2, 2])
+        else:
+            self.action_space = spaces.MultiDiscrete([3, 2, 2])
 
         self.server = Server(port=port, img_size=image_size)
         self._process = start_emulator(boss=boss, port=port, enjoy=enjoy)

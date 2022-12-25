@@ -12,12 +12,12 @@ def enjoy(config):
     Model: PPO = config["model"]
     model_name = config["model_name"]
 
-    # model = Model.load(f"models/{config['model_name']}", env=env)
+    model = Model.load(f"models/done/{model_name}", env=env)
 
-    model = Model.load(
-        f"checkpoints/{model_name}/model_2000000_steps",
-        env=env,
-    )
+    # model = Model.load(
+    #     f"checkpoints/{model_name}/model_1500000_steps",
+    #     env=env,
+    # )
 
     # for i in range(500_000, 10_500_000, 500_000):
     # model = Model.load(
