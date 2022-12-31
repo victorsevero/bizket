@@ -1,5 +1,5 @@
 ---
-model_name: z1_sevs_1hp
+model_name: z1_sevs_1hp_o
 model: PPO
 save_freq: 100_000
 env:

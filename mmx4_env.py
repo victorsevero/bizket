@@ -25,7 +25,7 @@ class Mmx4Env(gym.Env):
         port=6969,
         time=600,
         image_size=(84, 84),
-        allow_circle=False,
+        allow_circle=True,
         enjoy=False,
     ):
 

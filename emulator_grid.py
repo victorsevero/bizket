@@ -7,14 +7,14 @@ import pygetwindow as gw
 EMULATORS_PER_ROW = 8
 SCREEN_X = 2560
 SIZE_X = SCREEN_X // EMULATORS_PER_ROW
-SIZE_Y = 335
+SIZE_Y = 240
 
 
 def start_emulator(boss, port=6969, enjoy=False):
     if enjoy:
-        ini_file = r"--config=C:\Users\victo\Documents\bizket\emulators_configs\enjoy.ini"
+        ini_file = r"--config=C:\Users\victo\Documents\bizket\enjoy.ini"
     else:
-        ini_file = r"--config=C:\Users\victo\Documents\bizket\emulators_configs\training.ini"
+        ini_file = r"--config=C:\Users\victo\Documents\bizket\training.ini"
     return subprocess.Popen(
         [
             r"C:\Users\victo\Documents\BizHawk-rc2\EmuHawk.exe",
@@ -23,6 +23,7 @@ def start_emulator(boss, port=6969, enjoy=False):
             f"--load-slot={boss}",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
+            "--chromeless",
         ]
     )
 
@@ -30,9 +31,7 @@ def start_emulator(boss, port=6969, enjoy=False):
 def set_emulator_grid(n):
     windows = []
     while len(windows) != n:
-        windows = gw.getWindowsWithTitle(
-            "Mega Man X4 (USA) [PlayStation] - BizHawk (interim)"
-        )
+        windows = gw.getWindowsWithTitle("[PlayStation] - BizHawk (interim)")
 
     for position, window in enumerate(windows):
         thread = threading.Thread(
