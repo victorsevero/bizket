@@ -23,7 +23,6 @@ def start_emulator(boss, port=6969, enjoy=False):
             f"--load-slot={boss}",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",
-            "--chromeless",
         ]
     )
 

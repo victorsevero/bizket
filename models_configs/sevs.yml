@@ -3,7 +3,7 @@ model_name: z1_sevs_1hp_o
 model: PPO
 save_freq: 100_000
 env:
-  boss: 1
+  boss: 0
   n_envs: 16
   n_stack: 5
 model_kwargs:
