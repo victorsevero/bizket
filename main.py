@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import yaml
 from stable_baselines3 import PPO
@@ -14,26 +15,55 @@ from stable_baselines3.common.callbacks import (
 from stable_baselines3.common.evaluation import evaluate_policy
 from torch import nn
 
+from make_config import make_training_config, make_enjoy_config
 from emulator_grid import set_emulator_grid
 from mmx4_env import Mmx4Env
 from callbacks import HpLoggerCallback
 
 
-def make_mmx4_env(boss, port, enjoy=False):
+def make_mmx4_env(boss, bizhawk_path, ini_path, port, enjoy):
     def _init():
-        env = ClipRewardEnv(Mmx4Env(boss, port, enjoy=enjoy))
+        env = ClipRewardEnv(
+            Mmx4Env(
+                boss=boss,
+                bizhawk_path=bizhawk_path,
+                ini_path=ini_path,
+                port=port,
+                enjoy=enjoy,
+            )
+        )
         return env
 
     return _init
 
 
 def env_setup(env_config, default_port=6969, enjoy=False):
+    env_config = config["env"]
     n_envs = env_config["n_envs"]
     n_stack = env_config["n_stack"]
     boss = env_config["boss"]
 
+    paths_config = config["paths"]
+    bizhawk_path = paths_config["bizhawk_exe"]
+    bios_path = paths_config["bios_bin"]
+    rom_path = paths_config["rom_image"]
+
+    if enjoy:
+        ini_path = Path("enjoy.ini").resolve()
+        make_enjoy_config(ini_path, bios_path, rom_path)
+    else:
+        ini_path = Path("training.ini").resolve()
+        make_training_config(ini_path, bios_path, rom_path)
+
     env_fns = [
-        make_mmx4_env(boss, default_port + i, enjoy) for i in range(n_envs)
+        make_mmx4_env(
+            boss=boss,
+            bizhawk_path=bizhawk_path,
+            ini_path=ini_path,
+            port=default_port + i,
+            enjoy=enjoy,
+        )
+        for i in range(n_envs)
     ]
 
     env = VecMonitor(
@@ -95,11 +125,14 @@ def config_parser(config):
             "leaky_relu": nn.LeakyReLU,
         }[config["model_kwargs"]["policy_kwargs"]["activation_fn"]]
 
+    for key, value in config["paths"].items():
+        config["paths"][key] = Path(value).resolve()
+
     return config
 
 
 def train_model(config):
-    env = env_setup(config["env"])
+    env = env_setup(config)
     Model: PPO = config["model"]
 
     if os.path.exists(f"models/{config['model_name']}.zip"):

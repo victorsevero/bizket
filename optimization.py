@@ -8,7 +8,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 
 
-from rl import env_setup
+from main import env_setup
 
 
 def sample_ppo_params(trial: optuna.Trial):

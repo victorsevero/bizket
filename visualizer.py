@@ -10,7 +10,7 @@ from torchvision import utils
 import matplotlib.pyplot as plt
 from tqdm import trange
 
-from rl import config_parser
+from main import config_parser
 
 
 FRAMESTACK_NUMBER = 5

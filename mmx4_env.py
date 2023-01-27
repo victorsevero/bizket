@@ -22,6 +22,8 @@ class Mmx4Env(gym.Env):
     def __init__(
         self,
         boss,
+        bizhawk_path,
+        ini_path,
         port=6969,
         time=600,
         image_size=(84, 84),
@@ -42,7 +44,12 @@ class Mmx4Env(gym.Env):
             self.action_space = spaces.MultiDiscrete([3, 2, 2])
 
         self.server = Server(port=port, img_size=image_size)
-        self._process = start_emulator(boss=boss, port=port, enjoy=enjoy)
+        self._process = start_emulator(
+            boss=boss,
+            port=port,
+            bizhawk_path=bizhawk_path,
+            ini_path=ini_path,
+        )
         self.server.accept_connection()
 
         self.max_steps = 60 // 6 * time

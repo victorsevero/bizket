@@ -34,8 +34,8 @@ def _make_config(template, ini_path, bios_path, rom_path, display_method):
         display_methods = ["Direct3D9", "OpenGL"]
         raise ValueError(f"display_method should be one of {display_methods}")
 
-    template["FirmwareUserSpecifications"] = {"PSX+U": bios_path}
-    template["RecentRoms"]["recentlist"] = [f"*OpenRom*{rom_path}"]
+    template["FirmwareUserSpecifications"] = {"PSX+U": str(bios_path)}
+    template["RecentRoms"]["recentlist"] = [f"*OpenRom*{str(rom_path)}"]
 
     with open(ini_path, "w") as fp:
         json.dump(template, fp, indent=2)

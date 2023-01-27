@@ -2,7 +2,7 @@ import yaml
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from rl import config_parser, env_setup
+from main import config_parser, env_setup
 
 
 def enjoy(config):

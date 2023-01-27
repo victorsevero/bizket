@@ -1,5 +1,6 @@
 import subprocess
 import threading
+from pathlib import Path
 
 import pygetwindow as gw
 
@@ -10,16 +11,13 @@ SIZE_X = SCREEN_X // EMULATORS_PER_ROW
 SIZE_Y = 240
 
 
-def start_emulator(boss, port=6969, enjoy=False):
-    if enjoy:
-        ini_file = r"--config=C:\Users\victo\Documents\bizket\enjoy.ini"
-    else:
-        ini_file = r"--config=C:\Users\victo\Documents\bizket\training.ini"
+def start_emulator(boss, port, bizhawk_path, ini_path):
+    lua_client_path = Path("client.lua").resolve()
     return subprocess.Popen(
         [
-            r"C:\Users\victo\Documents\BizHawk-rc2\EmuHawk.exe",
-            ini_file,
-            r"--lua=C:\Users\victo\Documents\bizket\client.lua",
+            bizhawk_path,
+            f"--config={ini_path}",
+            f"--lua={lua_client_path}",
             f"--load-slot={boss}",
             "--socket_ip=127.0.0.1",
             f"--socket_port={port}",

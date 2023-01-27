@@ -161,3 +161,13 @@ cython_debug/
 
 # VSCode
 .vscode/
+
+# Developer files
+bios.bin
+
+# Quick tests file
+/test.py
+
+# Default INI paths
+/training.ini
+enjoy.ini
