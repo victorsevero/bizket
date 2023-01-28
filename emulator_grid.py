@@ -28,7 +28,7 @@ def start_emulator(boss, port, bizhawk_path, ini_path):
 def set_emulator_grid(n):
     windows = []
     while len(windows) != n:
-        windows = gw.getWindowsWithTitle("[PlayStation] - BizHawk (interim)")
+        windows = gw.getWindowsWithTitle("[PlayStation] - BizHawk")
 
     for position, window in enumerate(windows):
         thread = threading.Thread(

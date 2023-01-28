@@ -50,10 +50,12 @@ def env_setup(env_config, default_port=6969, enjoy=False):
 
     if enjoy:
         ini_path = Path("enjoy.ini").resolve()
-        make_enjoy_config(ini_path, bios_path, rom_path)
+        if not ini_path.exists():
+            make_enjoy_config(ini_path, bios_path, rom_path)
     else:
         ini_path = Path("training.ini").resolve()
-        make_training_config(ini_path, bios_path, rom_path)
+        if not ini_path.exists():
+            make_training_config(ini_path, bios_path, rom_path)
 
     env_fns = [
         make_mmx4_env(
