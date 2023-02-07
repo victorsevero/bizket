@@ -14,3 +14,6 @@
 PS.: Windows only!
 
 PS².: This instructions reproduce only the first boss of the game with Zero. I will make a more detailed guide in the future when I turn this into a library.
+
+## Explanatory Video in Portuguese
+https://www.youtube.com/watch?v=zVA7WZxvtyA
