@@ -18,5 +18,5 @@ PS².: This instructions reproduce only the first boss of the game with Zero. I 
 ## Explanatory Video in Portuguese
 https://www.youtube.com/watch?v=zVA7WZxvtyA
 
-## AI playing all main bosses of the game
+## Final RL models beating all main bosses of the game
 https://www.youtube.com/watch?v=uYRemfDmwTk
