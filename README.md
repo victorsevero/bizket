@@ -11,9 +11,9 @@
 7. Run `main.py`.
 8. Results will show up during runtime inside `logs` directory. You can visualize them with TensorBoard by running `tensorboard --logdir logs` inside project root directory.
 
-PS.: Windows only!
+PS.: Windows only, sorry! The connection method depends on Windows-exclusive features of the emulator.
 
-PS².: This instructions reproduce only the first boss of the game with Zero. I will make a more detailed guide in the future when I turn this into a library.
+PS².: These instructions reproduce only the first boss of the game playing with the character named `Zero`. ~~I will make a more detailed guide in the future when I turn this into a library.~~ UPDATE: In the future, I will adapt this case for [stable-retro](https://github.com/Farama-Foundation/stable-retro), which is the most promising successor of OpenAI's retro library and which I contribute to.
 
 ## Explanatory Video in Portuguese
 https://www.youtube.com/watch?v=zVA7WZxvtyA
