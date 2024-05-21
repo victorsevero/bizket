@@ -1,0 +1,11 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "SEVERO"
+  given-names: "VICTOR"
+  orcid: "https://orcid.org/0009-0001-2657-9589"
+title: "Reproducible Reinforcement Learning for Mega Man X4"
+version: 1.0.0
+doi: 10.5281/zenodo.11238646
+date-released: 2024-05-21
+url: "https://github.com/victorsevero/bizket"
