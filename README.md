@@ -1,4 +1,7 @@
-# bizket
+[![DOI](https://zenodo.org/badge/556160014.svg)](https://zenodo.org/doi/10.5281/zenodo.11238646)
+
+
+# Reproducible Reinforcement Learning for Mega Man X4
 
 ## How to reproduce
 
